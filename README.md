@@ -36,10 +36,15 @@ source venv/bin/activate
 python -m tools.cli.standup
 ```
 
-## Requirements
+## Prerequisites
 
-- Python 3.10+
-- Jira Cloud instance with API token access
+- **Python 3.10+** — [Download](https://www.python.org/downloads/)
+- **Jira Cloud instance** with API access
+- **Jira API Token** — Generate one at [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+- **Your Jira email** — The email associated with your Atlassian account
+- **Your Jira base URL** — e.g. `https://your-org.atlassian.net`
+
+No Anthropic API key, Google Cloud credentials, or MCP setup required. Google export is optional.
 
 ## CLI Reference
 
@@ -95,10 +100,10 @@ All config goes in `.env` (copy from `.env.example`):
 JIRA_BASE_URL=https://your-org.atlassian.net
 JIRA_USER_EMAIL=your.email@company.com
 JIRA_API_TOKEN=your_api_token_here
-JIRA_ACTIVE_PROJECTS=PROJ1,PROJ2
 
-# Optional
-JIRA_WATCHED_PROJECTS=PROJ3,PROJ4
+# Optional (auto-detected from your assigned issues if empty)
+JIRA_ACTIVE_PROJECTS=
+JIRA_WATCHED_PROJECTS=
 JIRA_STALE_THRESHOLD_DAYS=14
 JIRA_STALE_IN_PROGRESS_DAYS=7
 JIRA_STALE_BLOCKED_DAYS=3
