@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Jira{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="summary-cards">
+    <div class="card">
+        <div class="card-value">{{ report.summary.total_open }}</div>
+        <div class="card-label">Open</div>
+    </div>
+    <div class="card card-blue">
+        <div class="card-value">{{ report.summary.in_progress }}</div>
+        <div class="card-label">In Progress</div>
+    </div>
+    <div class="card card-gray">
+        <div class="card-value">{{ report.summary.to_do }}</div>
+        <div class="card-label">To Do</div>
+    </div>
+    <div class="card card-orange">
+        <div class="card-value">{{ report.summary.stale_count }}</div>
+        <div class="card-label">Stale</div>
+    </div>
+    <div class="card card-red">
+        <div class="card-value">{{ report.summary.blocked_count }}</div>
+        <div class="card-label">Blocked</div>
+    </div>
+    <div class="card card-green">
+        <div class="card-value">{{ report.summary.closed_this_week }}</div>
+        <div class="card-label">Closed (7d)</div>
+    </div>
+</div>
+
+<h2>My Open Issues</h2>
+{% if report.my_issues %}
+<table>
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Summary</th>
+            <th>Updated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for issue in report.my_issues %}
+        <tr>
+            <td><a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a></td>
+            <td>{{ issue.issue_type }}</td>
+            <td><span class="badge badge-{{ issue.status_category|lower|replace(' ', '-') }}">{{ issue.status }}</span></td>
+            <td>{{ issue.priority }}</td>
+            <td>{{ issue.summary[:60] }}</td>
+            <td>{{ issue.days_since_update or 0 }}d ago</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="muted">No open issues.</p>
+{% endif %}
+
+{% if report.stale %}
+<h2>Stale Issues</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Status</th>
+            <th>Days Stale</th>
+            <th>Summary</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for issue in report.stale %}
+        <tr class="row-warning">
+            <td><a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a></td>
+            <td><span class="badge badge-{{ issue.status_category|lower|replace(' ', '-') }}">{{ issue.status }}</span></td>
+            <td>{{ issue.days_since_update }}</td>
+            <td>{{ issue.summary[:60] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if report.recently_closed %}
+<h2>Recently Closed (7 days)</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Type</th>
+            <th>Summary</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for issue in report.recently_closed %}
+        <tr>
+            <td><a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a></td>
+            <td>{{ issue.issue_type }}</td>
+            <td>{{ issue.summary[:60] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

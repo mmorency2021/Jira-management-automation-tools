@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Quarterly Report — Jira{% endblock %}
+{% block content %}
+<h1>Quarterly Report — {{ quarter }} {{ year }}</h1>
+<p class="muted">{{ start_date }} to {{ end_date }}</p>
+
+<form method="GET" action="{{ url_for('quarterly') }}" class="quarter-selector">
+    <select name="quarter">
+        {% for q in ['Q1', 'Q2', 'Q3', 'Q4'] %}
+        <option value="{{ q }}" {% if q == quarter %}selected{% endif %}>{{ q }}</option>
+        {% endfor %}
+    </select>
+    <input type="number" name="year" value="{{ year }}" min="2020" max="2030">
+    <button type="submit" class="btn">Load</button>
+</form>
+
+<div class="summary-cards">
+    <div class="card card-green">
+        <div class="card-value">{{ report.total_closed }}</div>
+        <div class="card-label">Total Closed</div>
+    </div>
+    <div class="card">
+        <div class="card-value">{{ report.avg_cycle_time_days }}</div>
+        <div class="card-label">Avg Cycle (days)</div>
+    </div>
+</div>
+
+<div class="quarter-breakdown">
+    {% if report.by_project %}
+    <div class="quarter-section">
+        <h2>By Project</h2>
+        <table>
+            <thead><tr><th>Project</th><th>Closed</th></tr></thead>
+            <tbody>
+                {% for proj, count in report.by_project.items() %}
+                <tr><td>{{ proj }}</td><td>{{ count }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if report.by_type %}
+    <div class="quarter-section">
+        <h2>By Type</h2>
+        <table>
+            <thead><tr><th>Type</th><th>Count</th></tr></thead>
+            <tbody>
+                {% for itype, count in report.by_type.items() %}
+                <tr><td>{{ itype }}</td><td>{{ count }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if report.by_label %}
+    <div class="quarter-section">
+        <h2>Top Labels</h2>
+        <table>
+            <thead><tr><th>Label</th><th>Count</th></tr></thead>
+            <tbody>
+                {% for lbl, count in report.by_label.items() %}
+                <tr><td>{{ lbl }}</td><td>{{ count }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+{% if report.issues %}
+<h2>Closed Issues</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Project</th>
+            <th>Type</th>
+            <th>Summary</th>
+            <th>Closed</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for issue in report.issues %}
+        <tr>
+            <td><a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a></td>
+            <td>{{ issue.project_key }}</td>
+            <td>{{ issue.issue_type }}</td>
+            <td>{{ issue.summary[:50] }}</td>
+            <td>{{ issue.updated.strftime('%Y-%m-%d') if issue.updated else '?' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

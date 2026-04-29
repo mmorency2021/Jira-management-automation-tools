@@ -1,0 +1,15 @@
+.env
+.env.local
+.tmp/
+credentials.json
+token.json
+__pycache__/
+*.pyc
+.DS_Store
+venv/
+.claude/
+
+# Export outputs
+*.xlsx
+*.docx
+*.pptx

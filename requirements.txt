@@ -1,0 +1,15 @@
+requests>=2.31.0
+python-dotenv>=1.0.0
+click>=8.1.0
+rich>=13.0.0
+Flask>=2.3.0
+
+# Local file export (.xlsx, .docx, .pptx)
+openpyxl>=3.1.0
+python-docx>=1.0.0
+python-pptx>=0.6.23
+
+# Google Workspace export (optional — only needed for --export-sheets / --export-slides)
+gspread>=6.0.0
+google-api-python-client>=2.100.0
+google-auth-oauthlib>=1.0.0

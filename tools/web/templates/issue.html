@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ issue.key }} — Jira{% endblock %}
+{% block content %}
+<h1>{{ issue.key }} — {{ issue.summary }}</h1>
+
+<div class="issue-meta">
+    <span class="badge badge-{{ issue.status_category|lower|replace(' ', '-') }}">{{ issue.status }}</span>
+    <span>Type: {{ issue.issue_type }}</span>
+    <span>Priority: {{ issue.priority }}</span>
+    {% if issue.assignee_name and issue.assignee_name != 'Unassigned' %}<span>Assignee: {{ issue.assignee_name }}</span>{% endif %}
+    {% if issue.reporter_name %}<span>Reporter: {{ issue.reporter_name }}</span>{% endif %}
+</div>
+
+{% if issue.labels %}
+<div class="issue-labels">
+    {% for label in issue.labels %}
+    <span class="label-tag">{{ label }}</span>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if issue.description %}
+<div class="issue-description">
+    <h2>Description</h2>
+    <pre>{{ issue.description[:2000] }}</pre>
+</div>
+{% endif %}
+
+<div class="issue-dates">
+    <p>Created: {{ issue.created.strftime('%Y-%m-%d') if issue.created else '?' }} | Updated: {{ issue.updated.strftime('%Y-%m-%d') if issue.updated else '?' }}{% if issue.days_since_update %} ({{ issue.days_since_update }}d ago){% endif %}</p>
+</div>
+
+{% if issue.links %}
+<h2>Links</h2>
+<table>
+    <thead><tr><th>Type</th><th>Direction</th><th>Issue</th><th>Status</th></tr></thead>
+    <tbody>
+        {% for link in issue.links %}
+        <tr>
+            <td>{{ link.link_type }}</td>
+            <td>{{ link.direction }}</td>
+            <td><a href="{{ url_for('issue_detail', key=link.linked_key) }}">{{ link.linked_key }}</a> — {{ link.linked_summary[:50] }}</td>
+            <td>{{ link.linked_status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<div class="issue-actions">
+    <h2>Transition</h2>
+    <form method="POST" action="{{ url_for('issue_transition', key=issue.key) }}">
+        <select name="status">
+            {% for t in transitions %}
+            <option value="{{ t.name }}">{{ t.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="comment" placeholder="Optional comment">
+        <button type="submit" class="btn">Transition</button>
+    </form>
+
+    <h2>Add Comment</h2>
+    <form method="POST" action="{{ url_for('issue_comment', key=issue.key) }}">
+        <textarea name="body" rows="3" placeholder="Comment text..."></textarea>
+        <button type="submit" class="btn">Add Comment</button>
+    </form>
+</div>
+
+{% if issue.comments %}
+<h2>Comments ({{ issue.comments|length }})</h2>
+{% for c in issue.comments %}
+<div class="comment">
+    <div class="comment-header">{{ c.author_name }} — {{ c.created.strftime('%Y-%m-%d %H:%M') if c.created else '' }}</div>
+    <div class="comment-body">{{ c.body[:500] }}</div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

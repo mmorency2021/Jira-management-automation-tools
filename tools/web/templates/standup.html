@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Standup — Jira{% endblock %}
+{% block content %}
+<h1>Daily Standup</h1>
+
+<div class="standup-actions">
+    <button onclick="copyMarkdown()" class="btn">Copy Markdown</button>
+</div>
+
+<div class="standup-sections">
+    <h2>In Progress ({{ report.by_status.get('In Progress', [])|length }})</h2>
+    {% for issue in report.by_status.get('In Progress', []) %}
+    <div class="standup-item">
+        <a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a>
+        <span class="badge badge-in-progress">{{ issue.status }}</span>
+        {{ issue.summary[:80] }}
+    </div>
+    {% endfor %}
+
+    <h2>To Do ({{ report.by_status.get('To Do', [])|length }})</h2>
+    {% for issue in report.by_status.get('To Do', []) %}
+    <div class="standup-item">
+        <a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a>
+        <span class="badge badge-to-do">{{ issue.status }}</span>
+        {{ issue.summary[:80] }}
+    </div>
+    {% endfor %}
+
+    {% if report.blocked %}
+    <h2>Blocked ({{ report.blocked|length }})</h2>
+    {% for issue in report.blocked %}
+    <div class="standup-item standup-blocked">
+        <a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a>
+        <span class="badge badge-blocked">Blocked</span>
+        {{ issue.summary[:80] }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if report.recently_closed %}
+    <h2>Recently Closed ({{ report.recently_closed|length }})</h2>
+    {% for issue in report.recently_closed %}
+    <div class="standup-item standup-done">
+        <a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a>
+        <span class="badge badge-done">{{ issue.status }}</span>
+        {{ issue.summary[:80] }}
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<h2>Markdown Preview</h2>
+<pre id="markdown-content">{{ markdown }}</pre>
+
+<script>
+function copyMarkdown() {
+    const text = document.getElementById('markdown-content').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.standup-actions .btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy Markdown'; }, 2000);
+    });
+}
+</script>
+{% endblock %}

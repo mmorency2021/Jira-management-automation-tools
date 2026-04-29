@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Jira Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="layout">
+        <nav class="sidebar">
+            <h2>Jira Automation</h2>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a></li>
+                <li><a href="{{ url_for('standup') }}" class="{% if request.endpoint == 'standup' %}active{% endif %}">Standup</a></li>
+                <li><a href="{{ url_for('issue_search') }}" class="{% if request.endpoint == 'issue_search' %}active{% endif %}">Search</a></li>
+                <li><a href="{{ url_for('quarterly') }}" class="{% if request.endpoint == 'quarterly' %}active{% endif %}">Quarterly</a></li>
+            </ul>
+        </nav>
+        <main class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

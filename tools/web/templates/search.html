@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Search — Jira{% endblock %}
+{% block content %}
+<h1>Search Issues</h1>
+
+<form method="GET" action="{{ url_for('issue_search') }}" class="search-form">
+    <div class="search-filters">
+        <div class="filter-group">
+            <label>Project</label>
+            <input type="text" name="project" value="{{ filters.project }}" placeholder="e.g., NGC">
+        </div>
+        <div class="filter-group">
+            <label>Status</label>
+            <input type="text" name="status" value="{{ filters.status }}" placeholder="e.g., In Progress">
+        </div>
+        <div class="filter-group">
+            <label>Assignee</label>
+            <input type="text" name="assignee" value="{{ filters.assignee }}" placeholder="email or 'me'">
+        </div>
+        <div class="filter-group">
+            <label>Label</label>
+            <input type="text" name="label" value="{{ filters.label }}" placeholder="e.g., 1Core">
+        </div>
+    </div>
+    <div class="filter-group filter-full">
+        <label>Raw JQL (overrides above)</label>
+        <input type="text" name="jql" value="{{ filters.jql }}" placeholder='e.g., project = NGC AND status = "In Progress"'>
+    </div>
+    <button type="submit" class="btn">Search</button>
+</form>
+
+{% if searched %}
+<h2>Results ({{ issues|length }})</h2>
+{% if issues %}
+<table>
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Assignee</th>
+            <th>Summary</th>
+            <th>Updated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for issue in issues %}
+        <tr>
+            <td><a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a></td>
+            <td>{{ issue.issue_type }}</td>
+            <td><span class="badge badge-{{ issue.status_category|lower|replace(' ', '-') }}">{{ issue.status }}</span></td>
+            <td>{{ issue.priority }}</td>
+            <td>{{ issue.assignee or '' }}</td>
+            <td>{{ issue.summary[:50] }}</td>
+            <td>{{ issue.days_since_update or 0 }}d</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="muted">No issues found.</p>
+{% endif %}
+{% endif %}
+{% endblock %}
