@@ -128,18 +128,111 @@ JIRA_STALE_REVIEW_DAYS=5
 4. Download `credentials.json` to project root
 5. Run `--export-sheets` or `--export-slides` (first run opens browser for consent)
 
-## Architecture
+## How It Works
+
+### Solution Flow
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        USER                                      │
+│                                                                  │
+│   "run my standup"    "show NGC-588"    "generate Q1 review"     │
+└────────┬──────────────────┬──────────────────┬───────────────────┘
+         │                  │                  │
+         ▼                  ▼                  ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Terminal   │    │  Web        │    │  Claude     │
+│  CLI        │    │  Dashboard  │    │  Code       │
+│             │    │  :5000      │    │  (reads     │
+│  python -m  │    │             │    │  workflow   │
+│  tools.cli  │    │  Flask +    │    │  SOPs then  │
+│  .standup   │    │  Jinja2     │    │  runs CLI)  │
+└──────┬──────┘    └──────┬──────┘    └──────┬──────┘
+       │                  │                  │
+       └──────────────────┼──────────────────┘
+                          │
+                          ▼
+       ┌──────────────────────────────────────┐
+       │         CORE LIBRARY                  │
+       │         tools/jira/                   │
+       │                                       │
+       │  .env ──► config.py                   │
+       │              │                        │
+       │              ▼                        │
+       │         queries.py ── Build JQL       │
+       │              │                        │
+       │              ▼                        │
+       │         client.py ── HTTP + Auth      │
+       │           │  Retries, pagination,     │
+       │           │  rate limit handling       │
+       │           │                           │
+       │           ▼                           │
+       │    ┌─────────────┐                    │
+       │    │  Jira REST  │                    │
+       │    │  API v3     │                    │
+       │    └──────┬──────┘                    │
+       │           │                           │
+       │           ▼                           │
+       │     models.py ── Parse JSON → ADF     │
+       │       → clean Python dataclasses      │
+       │           │                           │
+       │           ▼                           │
+       │     reports.py ── Aggregate           │
+       │       Group by status, detect stale,  │
+       │       identify blockers, cycle times  │
+       │           │                           │
+       │           ▼                           │
+       │     formatters.py ── Output           │
+       │       Rich tables / Markdown / JSON   │
+       └───────────┬──────────────────────────┘
+                   │
+                   ▼
+       ┌──────────────────────────────────────┐
+       │         EXPORT                        │
+       │                                       │
+       │  Local:   .xlsx  .docx  .pptx         │
+       │  Google:  Sheets  Slides              │
+       └──────────────────────────────────────┘
+```
+
+### Request Lifecycle
+
+| Step | Component | What happens |
+|------|-----------|-------------|
+| 1 | **config.py** | Loads credentials from `.env`, auto-discovers projects if none configured |
+| 2 | **queries.py** | Builds JQL query (e.g. `assignee = currentUser() AND status NOT IN (Closed, Done)`) |
+| 3 | **client.py** | Sends HTTP request to Jira with Basic Auth, handles pagination and rate limits |
+| 4 | **models.py** | Parses Jira's nested JSON + ADF documents into clean Python dataclasses |
+| 5 | **reports.py** | Aggregates data: groups by status, flags stale/blocked, calculates cycle times |
+| 6 | **formatters.py** | Renders output as Rich terminal tables, Markdown, or JSON |
+| 7 | **export/** | Optionally exports to `.xlsx`, `.docx`, `.pptx`, Google Sheets, or Google Slides |
+
+### Design Decisions
+
+| Choice | Over | Reason |
+|--------|------|--------|
+| `requests` | `jira` library | 15+ fewer dependencies, installs on locked-down workstations |
+| Flask | Streamlit | ~50 fewer packages, better fit for forms and action buttons |
+| Dataclasses | Raw dicts | One place to parse Jira's nested JSON, all consumers get clean objects |
+| Three interfaces | One | CLI works everywhere, web for browser users, Claude Code for AI-assisted |
+
+### Directory Structure
 
 ```
 tools/
-  jira/           # Core library: config, HTTP client, models, queries, operations
-  cli/            # CLI entry points: standup, issues, search, deps, bulk, quarterly
-  web/            # Flask dashboard: routes, templates, static assets
-  export/         # Google Workspace + local file export
-workflows/        # Claude Code SOPs (markdown instructions for AI agent)
+  jira/           # Core library — shared by all interfaces
+    config.py     #   Load and validate configuration
+    client.py     #   HTTP client with auth, retries, pagination
+    models.py     #   Dataclasses: Issue, Comment, Transition, Sprint
+    queries.py    #   JQL builders and search operations
+    operations.py #   Create, update, transition, comment, link
+    reports.py    #   Standup, dependency, quarterly aggregation
+    formatters.py #   Rich tables, markdown, JSON output
+  cli/            # 6 CLI entry points (Click)
+  web/            # Flask dashboard with templates
+  export/         # Local files + Google Workspace
+workflows/        # Claude Code SOPs (markdown)
 ```
-
-Built on the **WAT framework** (Workflows, Agents, Tools) — markdown SOPs drive AI orchestration, deterministic Python scripts handle execution.
 
 ## License
 
