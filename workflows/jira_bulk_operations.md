@@ -20,32 +20,32 @@ Perform batch updates on multiple Jira issues — transitions, labels, assignmen
 ### Bulk transition
 ```bash
 # Preview
-python3 -m tools.cli.bulk transition --jql "project=NGC AND status=Resolved" --status Closed --dry-run
+jiraops bulk transition --jql "project=NGC AND status=Resolved" --status Closed --dry-run
 
 # Execute
-python3 -m tools.cli.bulk transition --jql "project=NGC AND status=Resolved" --status Closed --confirm
+jiraops bulk transition --jql "project=NGC AND status=Resolved" --status Closed --confirm
 ```
 
 ### Bulk label
 ```bash
 # Add label
-python3 -m tools.cli.bulk label --jql "project=NGC AND updated >= -30d" --add-label Q2-2026 --dry-run
+jiraops bulk label --jql "project=NGC AND updated >= -30d" --add-label Q2-2026 --dry-run
 
 # Remove label
-python3 -m tools.cli.bulk label --jql "project=NGC" --remove-label old-label --dry-run
+jiraops bulk label --jql "project=NGC" --remove-label old-label --dry-run
 
 # Both at once
-python3 -m tools.cli.bulk label --jql "..." --add-label new --remove-label old --dry-run
+jiraops bulk label --jql "..." --add-label new --remove-label old --dry-run
 ```
 
 ### Bulk assign
 ```bash
-python3 -m tools.cli.bulk assign --jql "project=NGC AND assignee is EMPTY AND type=Bug" --assignee user@redhat.com --dry-run
+jiraops bulk assign --jql "project=NGC AND assignee is EMPTY AND type=Bug" --assignee user@redhat.com --dry-run
 ```
 
 ### Bulk priority
 ```bash
-python3 -m tools.cli.bulk priority --jql "project=NGC AND labels=critical" --priority High --dry-run
+jiraops bulk priority --jql "project=NGC AND labels=critical" --priority High --dry-run
 ```
 
 ## Workflow for Claude

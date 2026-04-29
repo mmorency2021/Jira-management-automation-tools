@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jiraops"
+version = "1.0.0"
+description = "Jira automation management tools"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "Flask>=2.3.0",
+]
+
+[project.optional-dependencies]
+export = [
+    "openpyxl>=3.1.0",
+    "python-docx>=1.0.0",
+    "python-pptx>=0.6.23",
+]
+google = [
+    "gspread>=6.0.0",
+    "google-api-python-client>=2.100.0",
+    "google-auth-oauthlib>=1.0.0",
+]
+
+[project.scripts]
+jiraops = "tools.cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["tools*"]

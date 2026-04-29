@@ -5,6 +5,7 @@ credentials.json
 token.json
 __pycache__/
 *.pyc
+*.egg-info/
 .DS_Store
 venv/
 .claude/

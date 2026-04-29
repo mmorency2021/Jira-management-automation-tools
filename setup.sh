@@ -39,7 +39,7 @@ fi
 # Activate venv
 source venv/bin/activate
 
-pip install -r requirements.txt --quiet
+pip install -e . --quiet
 
 if [ ! -f .env ]; then
     cp .env.example .env
@@ -60,4 +60,4 @@ echo "Activate the virtual environment:"
 echo "  source venv/bin/activate"
 echo ""
 echo "Then test with:"
-echo "  python -m tools.cli.standup"
+echo "  jiraops standup"

@@ -33,7 +33,7 @@ bash setup.sh
 source venv/bin/activate
 
 # Test
-python -m tools.cli.standup
+jiraops standup
 ```
 
 ## Prerequisites
@@ -50,42 +50,42 @@ No Anthropic API key, Google Cloud credentials, or MCP setup required. Google ex
 
 ```bash
 # Daily standup
-python -m tools.cli.standup
-python -m tools.cli.standup --format markdown --output standup.md
-python -m tools.cli.standup --projects NGC,CNF --stale-days 7
+jiraops standup
+jiraops standup --format markdown --output standup.md
+jiraops standup --projects NGC,CNF --stale-days 7
 
 # Issue management
-python -m tools.cli.issues view NGC-588
-python -m tools.cli.issues mine
-python -m tools.cli.issues create --project NGC --summary "Fix deployment" --type Task
-python -m tools.cli.issues status NGC-588 "In Progress"
-python -m tools.cli.issues comment NGC-588 "Tested and working"
-python -m tools.cli.issues update NGC-588 --add-label Q2-2026
-python -m tools.cli.issues link NGC-588 OCPBUGS-123 --type Blocks
+jiraops issues view NGC-588
+jiraops issues mine
+jiraops issues create --project NGC --summary "Fix deployment" --type Task
+jiraops issues status NGC-588 "In Progress"
+jiraops issues comment NGC-588 "Tested and working"
+jiraops issues update NGC-588 --add-label Q2-2026
+jiraops issues link NGC-588 OCPBUGS-123 --type Blocks
 
 # Search
-python -m tools.cli.search --project NGC --status "In Progress"
-python -m tools.cli.search --jql "assignee = currentUser() AND labels = urgent"
+jiraops search --project NGC --status "In Progress"
+jiraops search --jql "assignee = currentUser() AND labels = urgent"
 
 # Dependencies
-python -m tools.cli.deps
-python -m tools.cli.deps --projects NGC,CNF --type Blocks
+jiraops deps
+jiraops deps --projects NGC,CNF --type Blocks
 
 # Bulk operations (always preview first!)
-python -m tools.cli.bulk label --jql "project=NGC AND updated >= -30d" --add-label Q2-2026 --dry-run
-python -m tools.cli.bulk transition --jql "project=NGC AND status=Resolved" --status Closed --dry-run
-python -m tools.cli.bulk assign --jql "project=NGC AND assignee is EMPTY" --assignee user@company.com --dry-run
+jiraops bulk label --jql "project=NGC AND updated >= -30d" --add-label Q2-2026 --dry-run
+jiraops bulk transition --jql "project=NGC AND status=Resolved" --status Closed --dry-run
+jiraops bulk assign --jql "project=NGC AND assignee is EMPTY" --assignee user@company.com --dry-run
 
 # Quarterly review
-python -m tools.cli.quarterly --quarter Q1 --year 2026
-python -m tools.cli.quarterly --export-xlsx --export-pptx
-python -m tools.cli.quarterly --export-sheets   # requires Google API setup
+jiraops quarterly --quarter Q1 --year 2026
+jiraops quarterly --export-xlsx --export-pptx
+jiraops quarterly --export-sheets   # requires Google API setup
 ```
 
 ## Web Dashboard
 
 ```bash
-python -m tools.web.app
+jiraops web
 # Open http://localhost:5000
 ```
 
@@ -144,9 +144,9 @@ JIRA_STALE_REVIEW_DAYS=5
 │  Terminal   │    │  Web        │    │  Claude     │
 │  CLI        │    │  Dashboard  │    │  Code       │
 │             │    │  :5000      │    │  (reads     │
-│  python -m  │    │             │    │  workflow   │
-│  tools.cli  │    │  Flask +    │    │  SOPs then  │
-│  .standup   │    │  Jinja2     │    │  runs CLI)  │
+│  jiraops    │    │             │    │  workflow   │
+│  standup    │    │  jiraops    │    │  SOPs then  │
+│             │    │  web        │    │  runs CLI)  │
 └──────┬──────┘    └──────┬──────┘    └──────┬──────┘
        │                  │                  │
        └──────────────────┼──────────────────┘

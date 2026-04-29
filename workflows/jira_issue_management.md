@@ -14,44 +14,44 @@ Create, view, update, transition, comment on, and link Jira issues from the comm
 
 ### View an issue
 ```bash
-python3 -m tools.cli.issues view NGC-588
+jiraops issues view NGC-588
 ```
 
 ### List my open issues
 ```bash
-python3 -m tools.cli.issues mine
-python3 -m tools.cli.issues mine --projects NGC,CNF
+jiraops issues mine
+jiraops issues mine --projects NGC,CNF
 ```
 
 ### Transition an issue
 ```bash
-python3 -m tools.cli.issues status NGC-588 "In Progress"
-python3 -m tools.cli.issues status NGC-588 Closed --comment "Done, verified in staging"
+jiraops issues status NGC-588 "In Progress"
+jiraops issues status NGC-588 Closed --comment "Done, verified in staging"
 ```
 
 ### Add a comment
 ```bash
-python3 -m tools.cli.issues comment NGC-588 "Tested and working"
+jiraops issues comment NGC-588 "Tested and working"
 ```
 
 ### Create an issue
 ```bash
-python3 -m tools.cli.issues create --project NGC --summary "Fix deployment script" --type Task
-python3 -m tools.cli.issues create --project NGC --summary "Critical bug" --type Bug --priority High --assign user@redhat.com
+jiraops issues create --project NGC --summary "Fix deployment script" --type Task
+jiraops issues create --project NGC --summary "Critical bug" --type Bug --priority High --assign user@redhat.com
 ```
 
 ### Update an issue
 ```bash
-python3 -m tools.cli.issues update NGC-588 --summary "New title"
-python3 -m tools.cli.issues update NGC-588 --assign user@redhat.com
-python3 -m tools.cli.issues update NGC-588 --add-label Q2-2026
-python3 -m tools.cli.issues update NGC-588 --remove-label old-label
+jiraops issues update NGC-588 --summary "New title"
+jiraops issues update NGC-588 --assign user@redhat.com
+jiraops issues update NGC-588 --add-label Q2-2026
+jiraops issues update NGC-588 --remove-label old-label
 ```
 
 ### Link issues
 ```bash
-python3 -m tools.cli.issues link NGC-588 OCPBUGS-123 --type Blocks
-python3 -m tools.cli.issues link NGC-588 CNF-456 --type Related
+jiraops issues link NGC-588 OCPBUGS-123 --type Blocks
+jiraops issues link NGC-588 CNF-456 --type Related
 ```
 
 ## Conversational Mapping

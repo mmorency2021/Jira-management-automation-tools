@@ -83,15 +83,15 @@ A full Jira management system lives under `tools/jira/`, `tools/cli/`, `tools/we
 
 **CLI Tools:**
 ```
-python3 -m tools.cli.standup          # Daily standup report
-python3 -m tools.cli.issues <cmd>     # Issue CRUD (view, mine, create, status, comment, update, link)
-python3 -m tools.cli.search           # Search with filters or raw JQL
-python3 -m tools.cli.deps             # Cross-project dependency tracker
-python3 -m tools.cli.bulk <cmd>       # Bulk operations (transition, label, assign, priority)
-python3 -m tools.cli.quarterly        # Quarterly review with export
+jiraops standup          # Daily standup report
+jiraops issues <cmd>     # Issue CRUD (view, mine, create, status, comment, update, link)
+jiraops search           # Search with filters or raw JQL
+jiraops deps             # Cross-project dependency tracker
+jiraops bulk <cmd>       # Bulk operations (transition, label, assign, priority)
+jiraops quarterly        # Quarterly review with export
 ```
 
-**Web Dashboard:** `python3 -m tools.web.app` → http://localhost:5000
+**Web Dashboard:** `jiraops web` → http://localhost:5000
 
 **Export:** `--export-xlsx`, `--export-docx`, `--export-pptx` (local), `--export-sheets`, `--export-slides` (Google API)
 

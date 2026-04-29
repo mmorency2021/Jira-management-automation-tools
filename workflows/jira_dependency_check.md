@@ -13,17 +13,17 @@ Identify cross-project dependencies and blocked work across your projects.
 
 1. **Run the dependency tracker:**
    ```bash
-   python3 -m tools.cli.deps
+   jiraops deps
    ```
 
 2. **Filter by project:**
    ```bash
-   python3 -m tools.cli.deps --projects NGC,CNF
+   jiraops deps --projects NGC,CNF
    ```
 
 3. **Filter by link type:**
    ```bash
-   python3 -m tools.cli.deps --type Blocks
+   jiraops deps --type Blocks
    ```
 
 ## Output

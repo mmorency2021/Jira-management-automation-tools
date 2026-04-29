@@ -15,7 +15,7 @@ None — uses credentials from `~/.claude/.env.local` and project config from `.
 
 1. **Run the standup CLI:**
    ```bash
-   python3 -m tools.cli.standup
+   jiraops standup
    ```
 
 2. **Format options:**
@@ -34,7 +34,7 @@ None — uses credentials from `~/.claude/.env.local` and project config from `.
 ## Scheduling (Claude Code users)
 Set up a durable cron job for weekday mornings:
 ```
-CronCreate("57 8 * * 1-5", "Run my daily Jira standup: python3 -m tools.cli.standup --format markdown", durable=true)
+CronCreate("57 8 * * 1-5", "Run my daily Jira standup: jiraops standup --format markdown", durable=true)
 ```
 Note: Claude Code cron auto-expires after 7 days. Re-establish with "set up my daily standup cron".
 

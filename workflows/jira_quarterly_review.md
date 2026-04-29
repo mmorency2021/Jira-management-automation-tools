@@ -13,7 +13,7 @@ Generate end-of-quarter reports showing work completed, cycle times, and breakdo
 
 1. **Generate the report:**
    ```bash
-   python3 -m tools.cli.quarterly --quarter Q1 --year 2026
+   jiraops quarterly --quarter Q1 --year 2026
    ```
    Defaults to the current quarter if not specified.
 
@@ -26,18 +26,18 @@ Generate end-of-quarter reports showing work completed, cycle times, and breakdo
 3. **Export to files:**
    ```bash
    # Local files (no Google API needed)
-   python3 -m tools.cli.quarterly --export-xlsx
-   python3 -m tools.cli.quarterly --export-docx
-   python3 -m tools.cli.quarterly --export-pptx
+   jiraops quarterly --export-xlsx
+   jiraops quarterly --export-docx
+   jiraops quarterly --export-pptx
 
    # Google Workspace (requires credentials.json setup)
-   python3 -m tools.cli.quarterly --export-sheets
-   python3 -m tools.cli.quarterly --export-slides
+   jiraops quarterly --export-sheets
+   jiraops quarterly --export-slides
    ```
 
 4. **Combine options:**
    ```bash
-   python3 -m tools.cli.quarterly --quarter Q1 --year 2026 --export-xlsx --export-pptx
+   jiraops quarterly --quarter Q1 --year 2026 --export-xlsx --export-pptx
    ```
 
 ## Report Contents
