@@ -4,6 +4,18 @@ from .client import JiraClient
 from .models import Issue
 
 
+def discover_projects(client: JiraClient) -> list[str]:
+    """Auto-discover projects from the user's assigned issues."""
+    jql = "assignee = currentUser() AND status NOT IN (Closed, Done) ORDER BY updated DESC"
+    raw = client.search_issues(jql, fields=["project"], max_results=100)
+    projects = set()
+    for issue in raw:
+        key = issue.get("fields", {}).get("project", {}).get("key", "")
+        if key:
+            projects.add(key)
+    return sorted(projects)
+
+
 def my_open_issues(client: JiraClient, projects: list[str] = None) -> list[Issue]:
     jql = "assignee = currentUser() AND status NOT IN (Closed, Done)"
     if projects:
@@ -104,10 +116,12 @@ def quarterly_closed(
     start_date: str,
     end_date: str,
 ) -> list[Issue]:
-    project_list = ", ".join(projects)
-    jql = (
-        f"assignee = currentUser() AND project IN ({project_list}) "
-        f'AND status IN (Closed, Done) AND resolved >= "{start_date}" '
+    jql = "assignee = currentUser()"
+    if projects:
+        project_list = ", ".join(projects)
+        jql += f" AND project IN ({project_list})"
+    jql += (
+        f' AND status IN (Closed, Done) AND resolved >= "{start_date}" '
         f'AND resolved <= "{end_date}" ORDER BY resolved DESC'
     )
     fields = [

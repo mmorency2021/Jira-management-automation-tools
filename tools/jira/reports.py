@@ -6,8 +6,16 @@ from .config import Config
 from .models import Issue
 
 
+def _resolve_projects(client: JiraClient, config: Config) -> list[str]:
+    """Return active projects — auto-discovers from Jira if none configured."""
+    if config.active_projects:
+        return config.active_projects
+    return queries.discover_projects(client)
+
+
 def standup_report(client: JiraClient, config: Config) -> dict:
-    my_issues = queries.my_open_issues(client, config.active_projects)
+    projects = _resolve_projects(client, config)
+    my_issues = queries.my_open_issues(client, projects)
 
     stale = [
         i for i in my_issues
@@ -15,9 +23,9 @@ def standup_report(client: JiraClient, config: Config) -> dict:
         and i.days_since_update >= config.stale_threshold_for_status(i.status)
     ]
 
-    blocked = queries.blocked_issues(client, config.active_projects)
+    blocked = queries.blocked_issues(client, projects)
 
-    closed = queries.recently_closed(client, config.active_projects, days=7)
+    closed = queries.recently_closed(client, projects, days=7)
 
     watched = []
     if config.watched_projects:
@@ -47,7 +55,8 @@ def standup_report(client: JiraClient, config: Config) -> dict:
 
 
 def dependency_report(client: JiraClient, config: Config) -> dict:
-    my_issues = queries.my_open_issues(client, config.active_projects)
+    projects = _resolve_projects(client, config)
+    my_issues = queries.my_open_issues(client, projects)
 
     cross_project_deps = []
     for issue in my_issues:
@@ -66,7 +75,7 @@ def dependency_report(client: JiraClient, config: Config) -> dict:
                     "at_risk": link.linked_status_category.lower() not in ("done", "complete"),
                 })
 
-    blocked = queries.blocked_issues(client, config.active_projects)
+    blocked = queries.blocked_issues(client, projects)
 
     return {
         "cross_project": cross_project_deps,
@@ -81,7 +90,7 @@ def quarterly_report(
     start_date: str,
     end_date: str,
 ) -> dict:
-    projects = config.active_projects
+    projects = _resolve_projects(client, config)
     closed = queries.quarterly_closed(client, projects, start_date, end_date)
 
     by_project: dict[str, list[Issue]] = {}
