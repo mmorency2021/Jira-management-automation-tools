@@ -113,12 +113,48 @@ def quarterly_report(
 
     avg_cycle_time = total_cycle_days / cycle_count if cycle_count else 0
 
+    by_epic: dict[str, dict] = {}
+    standalone: list[Issue] = []
+    for issue in closed:
+        if issue.parent_key:
+            if issue.parent_key not in by_epic:
+                by_epic[issue.parent_key] = {
+                    "key": issue.parent_key,
+                    "summary": issue.parent_summary or issue.parent_key,
+                    "issues": [],
+                }
+            by_epic[issue.parent_key]["issues"].append(issue)
+        else:
+            standalone.append(issue)
+
+    by_priority: dict[str, int] = {}
+    for issue in closed:
+        by_priority[issue.priority] = by_priority.get(issue.priority, 0) + 1
+
+    by_component: dict[str, int] = {}
+    for issue in closed:
+        for comp in issue.components:
+            by_component[comp] = by_component.get(comp, 0) + 1
+
+    cycle_times = []
+    for issue in closed:
+        if issue.created and issue.updated:
+            cycle_times.append((issue.updated - issue.created).days)
+    fastest = min(cycle_times) if cycle_times else 0
+    slowest = max(cycle_times) if cycle_times else 0
+
     return {
         "date_range": {"start": start_date, "end": end_date},
         "total_closed": len(closed),
         "avg_cycle_time_days": round(avg_cycle_time, 1),
+        "fastest_cycle_days": fastest,
+        "slowest_cycle_days": slowest,
         "by_project": {k: len(v) for k, v in by_project.items()},
         "by_type": {k: len(v) for k, v in by_type.items()},
         "by_label": dict(sorted(by_label.items(), key=lambda x: x[1], reverse=True)[:15]),
+        "by_priority": dict(sorted(by_priority.items(), key=lambda x: x[1], reverse=True)),
+        "by_component": dict(sorted(by_component.items(), key=lambda x: x[1], reverse=True)[:15]),
+        "by_epic": by_epic,
+        "standalone": standalone,
         "issues": closed,
     }

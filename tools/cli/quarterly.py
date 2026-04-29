@@ -11,7 +11,7 @@ from rich.table import Table
 
 from tools.jira.client import JiraClient
 from tools.jira.config import get_config
-from tools.jira.formatters import issues_to_dicts
+from tools.jira.formatters import format_quarterly_detailed, issues_to_dicts
 from tools.jira.reports import quarterly_report
 
 
@@ -56,7 +56,10 @@ def _current_quarter() -> tuple[str, int]:
 @click.option("--export-xlsx", is_flag=True, help="Export to local .xlsx file")
 @click.option("--export-docx", is_flag=True, help="Export to local .docx file")
 @click.option("--export-pptx", is_flag=True, help="Export to local .pptx file")
-def main(quarter, year, output_format, output, export_sheets, export_slides, export_xlsx, export_docx, export_pptx):
+@click.option("--detailed", is_flag=True, help="Generate detailed narrative report")
+@click.option("--llm", "llm_provider", default=None, type=click.Choice(["ollama", "openai", "anthropic"]), help="LLM provider for narrative analysis")
+@click.option("--model", "llm_model", default=None, help="LLM model name (e.g. llama3, gpt-4o-mini, claude-sonnet-4-6)")
+def main(quarter, year, output_format, output, export_sheets, export_slides, export_xlsx, export_docx, export_pptx, detailed, llm_provider, llm_model):
     """Generate a quarterly review report."""
     try:
         config = get_config()
@@ -79,7 +82,36 @@ def main(quarter, year, output_format, output, export_sheets, export_slides, exp
     with console.status("Fetching quarterly data..."):
         report = quarterly_report(client, config, start_date, end_date)
 
-    if output_format == "json":
+    if detailed:
+        text = format_quarterly_detailed(report, quarter, year)
+
+        provider = llm_provider or config.llm_provider
+        model = llm_model or config.llm_model
+        if provider:
+            console.print(f"[dim]Generating LLM narrative ({provider}/{model or 'default'})...[/dim]")
+            from tools.llm.narrative import generate_narrative
+            ai_text = generate_narrative(
+                report, provider, model,
+                ollama_base_url=config.ollama_base_url,
+                openai_api_key=config.openai_api_key,
+                anthropic_api_key=config.anthropic_api_key,
+            )
+            if ai_text:
+                text = ai_text
+            else:
+                console.print("[yellow]LLM generation failed — using template report.[/yellow]")
+
+        if output:
+            with open(output, "w") as f:
+                f.write(text)
+            click.echo(f"Written to {output}")
+        else:
+            click.echo(text)
+
+        if not any([export_sheets, export_slides, export_xlsx, export_docx, export_pptx]):
+            return
+
+    if not detailed and output_format == "json":
         data = {
             "quarter": f"{quarter} {year}",
             "date_range": report["date_range"],
@@ -99,7 +131,7 @@ def main(quarter, year, output_format, output, export_sheets, export_slides, exp
             click.echo(text)
         return
 
-    if output_format == "markdown":
+    if not detailed and output_format == "markdown":
         lines = [
             f"# Quarterly Report — {quarter} {year}",
             f"**Period:** {start_date} to {end_date}",
@@ -139,49 +171,50 @@ def main(quarter, year, output_format, output, export_sheets, export_slides, exp
             click.echo(text)
         return
 
-    # Table format (default)
-    console.print(f"[bold]Total closed:[/bold] {report['total_closed']}")
-    console.print(f"[bold]Avg cycle time:[/bold] {report['avg_cycle_time_days']} days")
-    console.print()
-
-    if report["by_project"]:
-        pt = Table(title="By Project")
-        pt.add_column("Project", style="bold")
-        pt.add_column("Closed", justify="right")
-        for proj, count in report["by_project"].items():
-            pt.add_row(proj, str(count))
-        console.print(pt)
+    # Table format (default — skip if --detailed already printed)
+    if not detailed:
+        console.print(f"[bold]Total closed:[/bold] {report['total_closed']}")
+        console.print(f"[bold]Avg cycle time:[/bold] {report['avg_cycle_time_days']} days")
         console.print()
 
-    if report["by_type"]:
-        tt = Table(title="By Issue Type")
-        tt.add_column("Type", style="bold")
-        tt.add_column("Count", justify="right")
-        for itype, count in report["by_type"].items():
-            tt.add_row(itype, str(count))
-        console.print(tt)
-        console.print()
+        if report["by_project"]:
+            pt = Table(title="By Project")
+            pt.add_column("Project", style="bold")
+            pt.add_column("Closed", justify="right")
+            for proj, count in report["by_project"].items():
+                pt.add_row(proj, str(count))
+            console.print(pt)
+            console.print()
 
-    if report["by_label"]:
-        lt = Table(title="Top Labels")
-        lt.add_column("Label", style="bold")
-        lt.add_column("Count", justify="right")
-        for lbl, count in report["by_label"].items():
-            lt.add_row(lbl, str(count))
-        console.print(lt)
-        console.print()
+        if report["by_type"]:
+            tt = Table(title="By Issue Type")
+            tt.add_column("Type", style="bold")
+            tt.add_column("Count", justify="right")
+            for itype, count in report["by_type"].items():
+                tt.add_row(itype, str(count))
+            console.print(tt)
+            console.print()
 
-    if report["issues"]:
-        it = Table(title="Closed Issues")
-        it.add_column("Key", style="bold")
-        it.add_column("Project")
-        it.add_column("Type")
-        it.add_column("Summary")
-        it.add_column("Closed")
-        for issue in report["issues"]:
-            updated = issue.updated.strftime("%Y-%m-%d") if issue.updated else "?"
-            it.add_row(issue.key, issue.project_key, issue.issue_type, issue.summary[:50], updated)
-        console.print(it)
+        if report["by_label"]:
+            lt = Table(title="Top Labels")
+            lt.add_column("Label", style="bold")
+            lt.add_column("Count", justify="right")
+            for lbl, count in report["by_label"].items():
+                lt.add_row(lbl, str(count))
+            console.print(lt)
+            console.print()
+
+        if report["issues"]:
+            it = Table(title="Closed Issues")
+            it.add_column("Key", style="bold")
+            it.add_column("Project")
+            it.add_column("Type")
+            it.add_column("Summary")
+            it.add_column("Closed")
+            for issue in report["issues"]:
+                updated = issue.updated.strftime("%Y-%m-%d") if issue.updated else "?"
+                it.add_row(issue.key, issue.project_key, issue.issue_type, issue.summary[:50], updated)
+            console.print(it)
 
     if export_sheets:
         try:

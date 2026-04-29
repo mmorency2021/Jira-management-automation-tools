@@ -23,7 +23,69 @@
         <div class="card-value">{{ report.avg_cycle_time_days }}</div>
         <div class="card-label">Avg Cycle (days)</div>
     </div>
+    <div class="card card-blue">
+        <div class="card-value">{{ report.fastest_cycle_days }}</div>
+        <div class="card-label">Fastest (days)</div>
+    </div>
+    <div class="card card-orange">
+        <div class="card-value">{{ report.slowest_cycle_days }}</div>
+        <div class="card-label">Slowest (days)</div>
+    </div>
 </div>
+
+<div class="generate-options">
+    <h2>Generate Report</h2>
+    <form method="POST" action="{{ url_for('quarterly_generate') }}">
+        <input type="hidden" name="quarter" value="{{ quarter }}">
+        <input type="hidden" name="year" value="{{ year }}">
+
+        <div class="generate-row">
+            <div class="filter-group">
+                <label>LLM Provider (optional)</label>
+                <select name="llm_provider">
+                    <option value="">None (template only)</option>
+                    <option value="ollama" {% if form_llm_provider|default('') == 'ollama' %}selected{% endif %}>Ollama (local)</option>
+                    <option value="openai" {% if form_llm_provider|default('') == 'openai' %}selected{% endif %}>OpenAI</option>
+                    <option value="anthropic" {% if form_llm_provider|default('') == 'anthropic' %}selected{% endif %}>Anthropic</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Model (optional)</label>
+                <input type="text" name="llm_model" placeholder="e.g. llama3, gpt-4o-mini" value="{{ form_llm_model|default('') }}">
+            </div>
+
+            <div class="filter-group">
+                <label>Export</label>
+                <select name="export_format">
+                    <option value="">View in browser</option>
+                    <option value="xlsx">Excel (.xlsx)</option>
+                    <option value="docx">Word (.docx)</option>
+                    <option value="pptx">PowerPoint (.pptx)</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-generate">Generate Detailed Report</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if llm_warning is defined and llm_warning %}
+<div class="flash flash-error">{{ llm_warning }}</div>
+{% endif %}
+
+{% if narrative is defined and narrative %}
+<div class="narrative-report">
+    <div class="narrative-header">
+        <h2>Detailed Report</h2>
+        <button onclick="copyNarrative()" class="btn btn-copy">Copy Markdown</button>
+    </div>
+    <pre id="narrative-content">{{ narrative }}</pre>
+</div>
+{% endif %}
 
 <div class="quarter-breakdown">
     {% if report.by_project %}
@@ -67,16 +129,53 @@
         </table>
     </div>
     {% endif %}
+
+    {% if report.by_priority %}
+    <div class="quarter-section">
+        <h2>By Priority</h2>
+        <table>
+            <thead><tr><th>Priority</th><th>Count</th></tr></thead>
+            <tbody>
+                {% for prio, count in report.by_priority.items() %}
+                <tr><td>{{ prio }}</td><td>{{ count }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 </div>
 
+{% if report.by_epic %}
+<h2>By Epic / Initiative</h2>
+{% for epic_key, epic_data in report.by_epic.items() %}
+<div class="epic-group">
+    <h3>{{ epic_key }} — {{ epic_data.summary }}</h3>
+    <table>
+        <thead><tr><th>Key</th><th>Type</th><th>Summary</th><th>Closed</th></tr></thead>
+        <tbody>
+            {% for issue in epic_data.issues %}
+            <tr>
+                <td><a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a></td>
+                <td>{{ issue.issue_type }}</td>
+                <td>{{ issue.summary[:60] }}</td>
+                <td>{{ issue.updated.strftime('%Y-%m-%d') if issue.updated else '?' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endfor %}
+{% endif %}
+
 {% if report.issues %}
-<h2>Closed Issues</h2>
+<h2>All Closed Issues</h2>
 <table>
     <thead>
         <tr>
             <th>Key</th>
             <th>Project</th>
             <th>Type</th>
+            <th>Priority</th>
             <th>Summary</th>
             <th>Closed</th>
         </tr>
@@ -87,6 +186,7 @@
             <td><a href="{{ url_for('issue_detail', key=issue.key) }}">{{ issue.key }}</a></td>
             <td>{{ issue.project_key }}</td>
             <td>{{ issue.issue_type }}</td>
+            <td>{{ issue.priority }}</td>
             <td>{{ issue.summary[:50] }}</td>
             <td>{{ issue.updated.strftime('%Y-%m-%d') if issue.updated else '?' }}</td>
         </tr>
@@ -94,4 +194,15 @@
     </tbody>
 </table>
 {% endif %}
+
+<script>
+function copyNarrative() {
+    const text = document.getElementById('narrative-content').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.btn-copy');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy Markdown'; }, 2000);
+    });
+}
+</script>
 {% endblock %}

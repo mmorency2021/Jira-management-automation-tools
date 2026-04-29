@@ -112,6 +112,48 @@ JIRA_STALE_REVIEW_DAYS=5
 
 **Claude Code users:** Jira credentials can also live in `~/.claude/.env.local` (auto-detected).
 
+### LLM-Enhanced Reports (optional)
+
+The `--detailed` flag generates a structured quarterly report. Add an LLM provider for richer narrative analysis that highlights achievements, identifies themes, and writes an executive-ready summary.
+
+#### Ollama (free, local)
+
+```bash
+# Install Ollama: https://ollama.ai
+ollama pull llama3
+# In .env:
+LLM_PROVIDER=ollama
+LLM_MODEL=llama3
+```
+
+#### OpenAI
+
+```bash
+pip install openai
+# In .env:
+LLM_PROVIDER=openai
+LLM_MODEL=gpt-4o-mini
+OPENAI_API_KEY=sk-...
+```
+
+#### Anthropic
+
+```bash
+pip install anthropic
+# In .env:
+LLM_PROVIDER=anthropic
+LLM_MODEL=claude-sonnet-4-6
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+You can also pass the provider per-command without changing `.env`:
+
+```bash
+jiraops quarterly --detailed --llm ollama --model llama3
+```
+
+If no LLM is configured, `--detailed` still produces the template-based report.
+
 ## Export Formats
 
 ### Local (no setup needed)

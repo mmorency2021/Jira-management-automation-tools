@@ -4,11 +4,11 @@ from __future__ import annotations
 import os
 from datetime import date
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 
 from tools.jira.client import JiraClient
 from tools.jira.config import get_config
-from tools.jira.formatters import issues_to_dicts
+from tools.jira.formatters import format_quarterly_detailed, issues_to_dicts
 from tools.jira import operations, queries
 from tools.jira.reports import standup_report, quarterly_report
 
@@ -174,6 +174,84 @@ def quarterly():
         start_date=start_date,
         end_date=end_date,
     )
+
+
+@app.route("/quarterly/generate", methods=["POST"])
+def quarterly_generate():
+    config = _config()
+    client = _client()
+
+    quarter = request.form.get("quarter", "Q1")
+    year = int(request.form.get("year", date.today().year))
+
+    quarters_map = {"Q1": ("01-01", "03-31"), "Q2": ("04-01", "06-30"), "Q3": ("07-01", "09-30"), "Q4": ("10-01", "12-31")}
+    start_md, end_md = quarters_map[quarter]
+    start_date = f"{year}-{start_md}"
+    end_date = f"{year}-{end_md}"
+
+    report = quarterly_report(client, config, start_date, end_date)
+
+    export_format = request.form.get("export_format", "")
+    if export_format:
+        return _handle_export(export_format, report, quarter, year)
+
+    text = format_quarterly_detailed(report, quarter, year)
+
+    llm_provider = request.form.get("llm_provider", "")
+    llm_model = request.form.get("llm_model", "")
+    llm_warning = None
+
+    if llm_provider:
+        from tools.llm.narrative import generate_narrative
+        ai_text = generate_narrative(
+            report, llm_provider, llm_model or config.llm_model,
+            ollama_base_url=config.ollama_base_url,
+            openai_api_key=config.openai_api_key,
+            anthropic_api_key=config.anthropic_api_key,
+        )
+        if ai_text:
+            text = ai_text
+        else:
+            llm_warning = f"LLM generation failed ({llm_provider}) — showing template report."
+
+    return render_template(
+        "quarterly.html",
+        report=report,
+        quarter=quarter,
+        year=year,
+        start_date=start_date,
+        end_date=end_date,
+        narrative=text,
+        llm_warning=llm_warning,
+        form_llm_provider=llm_provider,
+        form_llm_model=llm_model,
+    )
+
+
+def _handle_export(fmt, report, quarter, year):
+    import os
+    tmp_dir = os.path.join(os.path.dirname(__file__), "..", "..", ".tmp")
+    os.makedirs(tmp_dir, exist_ok=True)
+
+    try:
+        if fmt == "xlsx":
+            from tools.export.local import export_quarterly_xlsx
+            path = export_quarterly_xlsx(report, quarter, year, output_dir=tmp_dir)
+            return send_file(path, as_attachment=True)
+        elif fmt == "docx":
+            from tools.export.local import export_quarterly_docx
+            path = export_quarterly_docx(report, quarter, year, output_dir=tmp_dir)
+            return send_file(path, as_attachment=True)
+        elif fmt == "pptx":
+            from tools.export.local import export_quarterly_pptx
+            path = export_quarterly_pptx(report, quarter, year, output_dir=tmp_dir)
+            return send_file(path, as_attachment=True)
+    except ImportError as e:
+        flash(f"Export package not installed: {e}", "error")
+    except Exception as e:
+        flash(f"Export failed: {e}", "error")
+
+    return redirect(url_for("quarterly", quarter=quarter, year=year))
 
 
 @app.route("/api/issues")

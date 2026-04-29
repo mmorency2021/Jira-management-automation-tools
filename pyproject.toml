@@ -26,6 +26,8 @@ google = [
     "google-api-python-client>=2.100.0",
     "google-auth-oauthlib>=1.0.0",
 ]
+llm-openai = ["openai>=1.0.0"]
+llm-anthropic = ["anthropic>=0.30.0"]
 
 [project.scripts]
 jiraops = "tools.cli.main:main"

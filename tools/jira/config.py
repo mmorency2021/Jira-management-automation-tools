@@ -21,6 +21,11 @@ class Config:
     stale_blocked_days: int
     stale_review_days: int
     default_board_id: str
+    llm_provider: str
+    llm_model: str
+    ollama_base_url: str
+    openai_api_key: str
+    anthropic_api_key: str
 
     @property
     def all_projects(self) -> list:
@@ -102,6 +107,11 @@ def get_config(env_path: str = None) -> Config:
         stale_blocked_days=int(merged.get("JIRA_STALE_BLOCKED_DAYS", "3")),
         stale_review_days=int(merged.get("JIRA_STALE_REVIEW_DAYS", "5")),
         default_board_id=merged.get("JIRA_DEFAULT_BOARD_ID", ""),
+        llm_provider=merged.get("LLM_PROVIDER", ""),
+        llm_model=merged.get("LLM_MODEL", ""),
+        ollama_base_url=merged.get("OLLAMA_BASE_URL", "http://localhost:11434"),
+        openai_api_key=merged.get("OPENAI_API_KEY", ""),
+        anthropic_api_key=merged.get("ANTHROPIC_API_KEY", ""),
     )
     return _config
 
