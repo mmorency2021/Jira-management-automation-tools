@@ -428,6 +428,59 @@ def format_quarterly_detailed(report: dict, quarter: str, year: int) -> str:
     return "\n".join(lines)
 
 
+_MAX_PROMPT_CHARS = 120_000
+_DESC_LIMIT = 500
+_COMMENT_BODY_LIMIT = 200
+_MAX_COMMENTS = 3
+_MAX_LINKS = 5
+
+
+def _issue_prompt_block(issue, indent: str = "  ", compact: bool = False) -> str:
+    cycle = ""
+    if issue.created and issue.updated:
+        cycle = f" (cycle: {(issue.updated - issue.created).days} days)"
+
+    if compact:
+        desc = ""
+        if issue.description:
+            clean = issue.description.replace("\n", " ").strip()[:150]
+            desc = f" | {clean}"
+        return (
+            f"{indent}- {issue.key} [{issue.issue_type}] [{issue.priority}] "
+            f"{issue.summary}{cycle}{desc}"
+        )
+
+    parts = [
+        f"{indent}- {issue.key} [{issue.issue_type}] [{issue.priority}] "
+        f"{issue.summary}{cycle}"
+    ]
+
+    if issue.description:
+        clean = issue.description.replace("\n", " ").strip()[:_DESC_LIMIT]
+        if len(issue.description.strip()) > _DESC_LIMIT:
+            clean += "..."
+        parts.append(f"{indent}  Description: {clean}")
+
+    if issue.labels:
+        parts.append(f"{indent}  Labels: {', '.join(issue.labels)}")
+
+    if issue.links:
+        link_strs = []
+        for link in issue.links[:_MAX_LINKS]:
+            link_strs.append(
+                f"{link.link_type} {link.linked_key} [{link.linked_status}]"
+            )
+        parts.append(f"{indent}  Links: {'; '.join(link_strs)}")
+
+    if issue.comments:
+        parts.append(f"{indent}  Recent comments:")
+        for comment in issue.comments[-_MAX_COMMENTS:]:
+            body = comment.body.replace("\n", " ").strip()[:_COMMENT_BODY_LIMIT]
+            parts.append(f"{indent}    - {comment.author_name}: \"{body}\"")
+
+    return "\n".join(parts)
+
+
 def report_to_prompt_data(report: dict) -> str:
     """Serialize quarterly report data into readable text for an LLM prompt."""
     lines = []
@@ -463,39 +516,28 @@ def report_to_prompt_data(report: dict) -> str:
             lines.append(f"  {comp}: {count}")
         lines.append("")
 
+    char_count = sum(len(l) for l in lines)
+    budget_remaining = _MAX_PROMPT_CHARS - char_count
+
     by_epic = report.get("by_epic", {})
     if by_epic:
         lines.append("ISSUES BY EPIC/INITIATIVE:")
         for epic_key, epic_data in by_epic.items():
             lines.append(f"\n  Epic: {epic_key} — {epic_data['summary']}")
             for issue in epic_data["issues"]:
-                cycle = ""
-                if issue.created and issue.updated:
-                    cycle = f" (cycle: {(issue.updated - issue.created).days} days)"
-                desc = ""
-                if issue.description:
-                    clean = issue.description.replace("\n", " ").strip()[:150]
-                    desc = f" | {clean}"
-                lines.append(
-                    f"    - {issue.key} [{issue.issue_type}] [{issue.priority}] "
-                    f"{issue.summary}{cycle}{desc}"
-                )
+                compact = budget_remaining < _MAX_PROMPT_CHARS * 0.2
+                block = _issue_prompt_block(issue, indent="    ", compact=compact)
+                lines.append(block)
+                budget_remaining -= len(block)
 
     standalone = report.get("standalone", [])
     if standalone:
         lines.append("\nSTANDALONE ISSUES (no epic):")
         for issue in standalone:
-            cycle = ""
-            if issue.created and issue.updated:
-                cycle = f" (cycle: {(issue.updated - issue.created).days} days)"
-            desc = ""
-            if issue.description:
-                clean = issue.description.replace("\n", " ").strip()[:150]
-                desc = f" | {clean}"
-            lines.append(
-                f"  - {issue.key} [{issue.issue_type}] [{issue.priority}] "
-                f"{issue.summary}{cycle}{desc}"
-            )
+            compact = budget_remaining < _MAX_PROMPT_CHARS * 0.2
+            block = _issue_prompt_block(issue, indent="  ", compact=compact)
+            lines.append(block)
+            budget_remaining -= len(block)
 
     return "\n".join(lines)
 

@@ -70,7 +70,10 @@ AND why it matters. Keep the Jira issue key (e.g. **NGC-123**) in each bullet.
 4. **Standout Achievements** — Highlight the most impressive work: fast turnarounds \
 on critical issues, high-priority blockers resolved, cross-project coordination, \
 complex bugs fixed, or anything that demonstrates exceptional responsiveness, \
-technical depth, or initiative. Explain why each stands out.
+technical depth, or initiative. Look for issues with extensive comment threads \
+(indicating complex problem-solving), multiple cross-project links (indicating \
+coordination effort), or labels like 'security', 'production', 'customer-reported' \
+(indicating high-stakes work). Explain why each stands out.
 
 5. **Productivity & Quality Summary** — 2-3 sentences assessing delivery velocity, \
 cycle time trends, and quality indicators (bugs fixed, stability improvements). \
@@ -85,6 +88,15 @@ Guidelines:
 - Keep issue keys visible — they are important for traceability.
 - Be specific and concrete, not generic. Reference actual issue summaries and details.
 - Write in a professional, confident tone appropriate for a performance review.
+- Use issue COMMENTS to identify collaboration patterns, problem-solving approaches, \
+and stakeholder engagement. Paraphrase comment insights when they demonstrate \
+technical depth, cross-team communication, or customer impact.
+- Use LINKS between issues to identify cross-team dependencies, unblocking work, and \
+coordination complexity. Issues linked to multiple other projects indicate high \
+coordination effort worth highlighting.
+- Use LABELS to identify themes (e.g. security, tech-debt, customer-facing, \
+infrastructure). Group related labels into narrative themes when possible.
+- Do NOT reproduce raw comments verbatim at length. Synthesize the collaboration story.
 - Do NOT invent issues or data that isn't in the input.
 - Do NOT use filler language or generic corporate speak. Every sentence should carry \
 specific information.
@@ -131,7 +143,7 @@ def _call_ollama(prompt_data: str, model: str, base_url: str) -> str | None:
             "prompt": prompt_data,
             "stream": False,
         },
-        timeout=120,
+        timeout=180,
     )
     resp.raise_for_status()
     return resp.json().get("response")
@@ -156,6 +168,7 @@ def _call_openai(prompt_data: str, model: str, api_key: str) -> str | None:
             {"role": "user", "content": prompt_data},
         ],
         temperature=0.7,
+        max_tokens=8192,
     )
     return resp.choices[0].message.content
 
@@ -174,7 +187,7 @@ def _call_anthropic(prompt_data: str, model: str, api_key: str) -> str | None:
     client = Anthropic(api_key=api_key)
     resp = client.messages.create(
         model=model or "claude-sonnet-4-6",
-        max_tokens=4096,
+        max_tokens=8192,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt_data}],
     )

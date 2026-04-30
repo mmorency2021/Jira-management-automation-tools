@@ -135,6 +135,7 @@ def quarterly_closed(
         "summary", "status", "issuetype", "priority", "assignee",
         "reporter", "labels", "created", "updated", "description",
         "components", "parent", "resolutiondate",
+        "comment", "issuelinks",
     ]
     raw = client.search_issues(jql, fields=fields, max_results=200)
     return [Issue.from_raw(r) for r in raw]
