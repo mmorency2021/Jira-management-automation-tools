@@ -12,6 +12,9 @@ No MCP required. Works on macOS and Linux.
 - **Bulk Operations** — Batch update labels, priorities, statuses, assignments (with dry-run)
 - **Quarterly Reviews** — Generate end-of-quarter reports with cycle time metrics
 - **Multi-Format Export** — `.xlsx`, `.docx`, `.pptx` (local) or Google Sheets/Slides
+- **Email Reports** — Send standup and quarterly reports by email via local Postfix or SMTP relay
+- **Built-in Scheduler** — Automatic daily standup and quarterly email delivery
+- **Team Visibility** — `--user` flag to view any team member's tickets as a manager
 - **Web Dashboard** — Browser-based UI at `localhost:5000`
 - **Claude Code Integration** — Workflow SOPs for AI-assisted project management
 
