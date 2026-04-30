@@ -103,9 +103,38 @@ def comment(key, body):
 @click.option("--label", multiple=True, help="Labels (can specify multiple)")
 @click.option("--parent", default=None, help="Parent issue key (for subtasks)")
 @click.option("--priority", default=None, help="Priority (e.g., High, Normal, Low)")
-def create(project, summary, issue_type, description, assign, label, parent, priority):
+@click.option("--generate", is_flag=True, help="Use LLM to generate description from summary")
+@click.option("--llm", "llm_provider", default=None, type=click.Choice(["ollama", "openai", "anthropic"]), help="LLM provider (overrides .env)")
+@click.option("--model", "llm_model", default=None, help="LLM model name")
+def create(project, summary, issue_type, description, assign, label, parent, priority, generate, llm_provider, llm_model):
     """Create a new issue."""
     client = _get_client()
+    config = get_config()
+
+    if generate:
+        provider = llm_provider or config.llm_provider
+        if not provider:
+            console.print("[red]No LLM provider configured. Use --llm or set LLM_PROVIDER in .env[/red]")
+            return
+
+        model = llm_model or config.llm_model
+        console.print(f"[dim]Generating description with {provider}/{model or 'default'}...[/dim]")
+
+        from tools.llm.narrative import generate_story
+        generated = generate_story(
+            summary, issue_type, provider, model,
+            project=project,
+            ollama_base_url=config.ollama_base_url,
+            openai_api_key=config.openai_api_key,
+            anthropic_api_key=config.anthropic_api_key,
+        )
+        if generated:
+            description = generated
+            console.print("\n[bold]Generated Description:[/bold]")
+            console.print(description)
+            console.print()
+        else:
+            console.print("[yellow]LLM generation failed — creating without description.[/yellow]")
 
     console.print(f"Creating {issue_type} in [bold]{project}[/bold]: {summary}")
     if not click.confirm("Proceed?"):

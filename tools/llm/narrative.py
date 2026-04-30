@@ -1,4 +1,4 @@
-"""Optional LLM-powered narrative analysis for quarterly reports."""
+"""Optional LLM-powered content generation for JiraOps."""
 from __future__ import annotations
 
 import json
@@ -8,6 +8,36 @@ from typing import Any
 import requests
 
 from tools.jira.formatters import report_to_prompt_data
+
+
+STORY_SYSTEM_PROMPT = """\
+You are a senior technical program manager writing a Jira story. \
+Given a brief summary, generate a well-structured story description in markdown format.
+
+Your output MUST include these sections:
+
+1. **Objective** — 2-3 sentences explaining the goal and why this work matters.
+
+2. **Background** — Brief context on why this is needed. What problem does it solve? \
+What triggered this request?
+
+3. **Scope** — Bullet list of what is in scope for this story.
+
+4. **Acceptance Criteria** — Numbered list of specific, testable criteria that define \
+"done". Each criterion should be concrete and verifiable.
+
+5. **Technical Notes** (optional) — Any implementation hints, constraints, or \
+dependencies worth noting. Only include if relevant.
+
+Guidelines:
+- Be specific and actionable, not vague.
+- Write acceptance criteria that a QA engineer could verify.
+- Keep it concise — no filler text.
+- Use professional language appropriate for engineering teams.
+- Do NOT invent technical details you can't infer from the summary.
+- If the summary is vague, keep the story general but well-structured.
+- Output ONLY the description content in markdown — no title, no metadata.
+"""
 
 
 SYSTEM_PROMPT = """\
@@ -149,3 +179,95 @@ def _call_anthropic(prompt_data: str, model: str, api_key: str) -> str | None:
         messages=[{"role": "user", "content": prompt_data}],
     )
     return resp.content[0].text
+
+
+def generate_story(
+    summary: str,
+    issue_type: str,
+    provider: str,
+    model: str,
+    *,
+    project: str = "",
+    ollama_base_url: str = "http://localhost:11434",
+    openai_api_key: str = "",
+    anthropic_api_key: str = "",
+) -> str | None:
+    """Generate a structured Jira story description from a brief summary.
+
+    Returns markdown string on success, None on failure.
+    """
+    prompt = f"Issue type: {issue_type}\n"
+    if project:
+        prompt += f"Project: {project}\n"
+    prompt += f"Summary: {summary}\n\nGenerate a well-structured description for this story."
+
+    try:
+        if provider == "ollama":
+            return _call_llm_with_prompt(STORY_SYSTEM_PROMPT, prompt, "ollama", model, ollama_base_url, "", "")
+        elif provider == "openai":
+            return _call_llm_with_prompt(STORY_SYSTEM_PROMPT, prompt, "openai", model, "", openai_api_key, "")
+        elif provider == "anthropic":
+            return _call_llm_with_prompt(STORY_SYSTEM_PROMPT, prompt, "anthropic", model, "", "", anthropic_api_key)
+        else:
+            print(f"Unknown LLM provider: {provider}", file=sys.stderr)
+            return None
+    except Exception as e:
+        print(f"LLM story generation failed ({provider}): {e}", file=sys.stderr)
+        return None
+
+
+def _call_llm_with_prompt(
+    system_prompt: str, user_prompt: str,
+    provider: str, model: str,
+    ollama_base_url: str, openai_api_key: str, anthropic_api_key: str,
+) -> str | None:
+    """Generic LLM call with configurable system and user prompts."""
+    if provider == "ollama":
+        model = model or "llama3"
+        resp = requests.post(
+            f"{ollama_base_url}/api/generate",
+            json={"model": model, "system": system_prompt, "prompt": user_prompt, "stream": False},
+            timeout=120,
+        )
+        resp.raise_for_status()
+        return resp.json().get("response")
+
+    elif provider == "openai":
+        if not openai_api_key:
+            print("OPENAI_API_KEY not set", file=sys.stderr)
+            return None
+        try:
+            from openai import OpenAI
+        except ImportError:
+            print("openai package not installed. Run: pip install openai", file=sys.stderr)
+            return None
+        client = OpenAI(api_key=openai_api_key)
+        resp = client.chat.completions.create(
+            model=model or "gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.7,
+        )
+        return resp.choices[0].message.content
+
+    elif provider == "anthropic":
+        if not anthropic_api_key:
+            print("ANTHROPIC_API_KEY not set", file=sys.stderr)
+            return None
+        try:
+            from anthropic import Anthropic
+        except ImportError:
+            print("anthropic package not installed. Run: pip install anthropic", file=sys.stderr)
+            return None
+        client = Anthropic(api_key=anthropic_api_key)
+        resp = client.messages.create(
+            model=model or "claude-sonnet-4-6",
+            max_tokens=4096,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        return resp.content[0].text
+
+    return None
