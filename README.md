@@ -55,12 +55,15 @@ No Anthropic API key, Google Cloud credentials, or MCP setup required. Google ex
 # Daily standup
 jiraops standup
 jiraops standup --format markdown --output standup.md
-jiraops standup --projects NGC,CNF --stale-days 7
+jiraops standup --user gkibria@redhat.com          # view a team member's standup
 
 # Issue management
 jiraops issues view NGC-588
 jiraops issues mine
 jiraops issues create --project NGC --summary "Fix deployment" --type Task
+jiraops issues create --project NGC --type Story --summary "Upgrade hub cluster firmware" --generate
+jiraops issues create --project NGC --type Story --summary "Automate cert suite" --generate --llm anthropic
+jiraops issues create --project NGC --type Bug --summary "Fix PTP sync issue" --generate --llm ollama --model llama3
 jiraops issues status NGC-588 "In Progress"
 jiraops issues comment NGC-588 "Tested and working"
 jiraops issues update NGC-588 --add-label Q2-2026
