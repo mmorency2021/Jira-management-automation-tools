@@ -28,6 +28,7 @@ google = [
 ]
 llm-openai = ["openai>=1.0.0"]
 llm-anthropic = ["anthropic>=0.30.0"]
+scheduler = ["schedule>=1.2.0"]
 
 [project.scripts]
 jiraops = "tools.cli.main:main"

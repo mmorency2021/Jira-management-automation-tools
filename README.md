@@ -154,6 +154,110 @@ jiraops quarterly --detailed --llm ollama --model llama3
 
 If no LLM is configured, `--detailed` still produces the template-based report.
 
+### Email Reports (optional)
+
+JiraOps can email standup and quarterly reports automatically using your system's built-in SMTP server (Postfix). No external email services or API keys required.
+
+#### Setup
+
+**macOS** (Postfix is pre-installed):
+
+```bash
+sudo postfix start
+```
+
+**Linux (Debian/Ubuntu)**:
+
+```bash
+sudo apt install postfix    # select "Local only" or "Internet Site"
+sudo systemctl start postfix
+```
+
+**Linux (RHEL/Fedora)**:
+
+```bash
+sudo dnf install postfix
+sudo systemctl start postfix
+```
+
+Then configure the recipient in `.env`:
+
+```ini
+JIRAOPS_EMAIL_RECIPIENT=your.email@company.com
+```
+
+That's it. The default config sends via `localhost:25` with no authentication.
+
+#### Optional: Gmail or Corporate SMTP
+
+If you prefer sending through an authenticated relay:
+
+```ini
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your.email@gmail.com
+SMTP_PASSWORD=your_app_password
+JIRAOPS_EMAIL_RECIPIENT=your.email@company.com
+```
+
+#### Sending Reports
+
+```bash
+# Send standup report now
+jiraops mail-standup
+
+# Preview without sending
+jiraops mail-standup --dry-run
+
+# Send quarterly report
+jiraops mail-quarterly --quarter Q1 --year 2026
+
+# With LLM narrative
+jiraops mail-quarterly --llm ollama --model llama3
+
+# Override recipient
+jiraops mail-standup --to someone@company.com
+```
+
+#### Automatic Scheduler
+
+The built-in scheduler sends reports on a schedule:
+
+```bash
+# Install scheduler dependency
+pip install schedule
+
+# Start the scheduler daemon
+jiraops scheduler
+
+# Custom standup time
+jiraops scheduler --standup-time 08:30
+
+# Disable specific reports
+jiraops scheduler --no-quarterly
+```
+
+The scheduler sends:
+- **Daily standup** at the configured time (default: 09:00)
+- **Quarterly report** on a specific day of quarter-end months (default: 1st of March, June, September, December)
+
+Configure via `.env`:
+
+```ini
+JIRAOPS_SCHEDULER_STANDUP_TIME=09:00
+JIRAOPS_SCHEDULER_QUARTERLY_DAY=1
+```
+
+To run in the background:
+
+```bash
+# Using nohup
+nohup jiraops scheduler &
+
+# Or with systemd (Linux)
+# Create a service file for persistent operation
+```
+
 ## Export Formats
 
 ### Local (no setup needed)
@@ -270,8 +374,10 @@ tools/
     operations.py #   Create, update, transition, comment, link
     reports.py    #   Standup, dependency, quarterly aggregation
     formatters.py #   Rich tables, markdown, JSON output
-  cli/            # 6 CLI entry points (Click)
+  cli/            # CLI entry points (Click) — standup, issues, search, deps, bulk, quarterly, mail, scheduler
   web/            # Flask dashboard with templates
+  mail/           # SMTP email sender (smtplib)
+  llm/            # LLM provider integration (Ollama, OpenAI, Anthropic)
   export/         # Local files + Google Workspace
 workflows/        # Claude Code SOPs (markdown)
 ```

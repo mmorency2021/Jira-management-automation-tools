@@ -7,6 +7,8 @@ from tools.cli.search import main as search_cmd
 from tools.cli.deps import main as deps_cmd
 from tools.cli.bulk import cli as bulk_group
 from tools.cli.quarterly import main as quarterly_cmd
+from tools.cli.mail import mail_standup, mail_quarterly
+from tools.cli.scheduler import main as scheduler_cmd
 
 
 @click.group()
@@ -31,6 +33,9 @@ cli.add_command(search_cmd, "search")
 cli.add_command(deps_cmd, "deps")
 cli.add_command(bulk_group, "bulk")
 cli.add_command(quarterly_cmd, "quarterly")
+cli.add_command(mail_standup, "mail-standup")
+cli.add_command(mail_quarterly, "mail-quarterly")
+cli.add_command(scheduler_cmd, "scheduler")
 
 
 def main():

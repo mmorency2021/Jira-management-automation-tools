@@ -26,6 +26,14 @@ class Config:
     ollama_base_url: str
     openai_api_key: str
     anthropic_api_key: str
+    smtp_host: str
+    smtp_port: int
+    smtp_user: str
+    smtp_password: str
+    email_recipient: str
+    email_from: str
+    scheduler_standup_time: str
+    scheduler_quarterly_day: int
 
     @property
     def all_projects(self) -> list:
@@ -112,6 +120,14 @@ def get_config(env_path: str = None) -> Config:
         ollama_base_url=merged.get("OLLAMA_BASE_URL", "http://localhost:11434"),
         openai_api_key=merged.get("OPENAI_API_KEY", ""),
         anthropic_api_key=merged.get("ANTHROPIC_API_KEY", ""),
+        smtp_host=merged.get("SMTP_HOST", "localhost"),
+        smtp_port=int(merged.get("SMTP_PORT", "25")),
+        smtp_user=merged.get("SMTP_USER", ""),
+        smtp_password=merged.get("SMTP_PASSWORD", ""),
+        email_recipient=merged.get("JIRAOPS_EMAIL_RECIPIENT", ""),
+        email_from=merged.get("JIRAOPS_EMAIL_FROM", ""),
+        scheduler_standup_time=merged.get("JIRAOPS_SCHEDULER_STANDUP_TIME", "09:00"),
+        scheduler_quarterly_day=int(merged.get("JIRAOPS_SCHEDULER_QUARTERLY_DAY", "1")),
     )
     return _config
 
