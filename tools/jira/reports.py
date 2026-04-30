@@ -14,8 +14,7 @@ def _resolve_projects(client: JiraClient, config: Config) -> list[str]:
 
 
 def standup_report(client: JiraClient, config: Config, user: str = None) -> dict:
-    projects = _resolve_projects(client, config) if not user else None
-    my_issues = queries.my_open_issues(client, projects, user=user)
+    my_issues = queries.my_open_issues(client, user=user)
 
     stale = [
         i for i in my_issues
@@ -23,13 +22,13 @@ def standup_report(client: JiraClient, config: Config, user: str = None) -> dict
         and i.days_since_update >= config.stale_threshold_for_status(i.status)
     ]
 
-    blocked = queries.blocked_issues(client, projects, user=user)
+    blocked = queries.blocked_issues(client, user=user)
 
-    closed = queries.recently_closed(client, projects, days=7, user=user)
+    closed = queries.recently_closed(client, days=7, user=user)
 
     watched = []
     if config.watched_projects and not user:
-        watched = queries.watched_issues(client, config.watched_projects)
+        watched = queries.watched_issues(client)
 
     by_status = {}
     for issue in my_issues:
@@ -55,8 +54,7 @@ def standup_report(client: JiraClient, config: Config, user: str = None) -> dict
 
 
 def dependency_report(client: JiraClient, config: Config) -> dict:
-    projects = _resolve_projects(client, config)
-    my_issues = queries.my_open_issues(client, projects)
+    my_issues = queries.my_open_issues(client)
 
     cross_project_deps = []
     for issue in my_issues:
@@ -75,7 +73,7 @@ def dependency_report(client: JiraClient, config: Config) -> dict:
                     "at_risk": link.linked_status_category.lower() not in ("done", "complete"),
                 })
 
-    blocked = queries.blocked_issues(client, projects)
+    blocked = queries.blocked_issues(client)
 
     return {
         "cross_project": cross_project_deps,
@@ -91,8 +89,7 @@ def quarterly_report(
     end_date: str,
     user: str = None,
 ) -> dict:
-    projects = _resolve_projects(client, config) if not user else None
-    closed = queries.quarterly_closed(client, projects, start_date, end_date, user=user)
+    closed = queries.quarterly_closed(client, None, start_date, end_date, user=user)
 
     by_project: dict[str, list[Issue]] = {}
     by_type: dict[str, list[Issue]] = {}
