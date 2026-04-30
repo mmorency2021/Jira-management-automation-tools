@@ -23,7 +23,8 @@ from tools.jira.reports import standup_report
 @click.option("--include-watched", is_flag=True, help="Include watched projects")
 @click.option("--stale-days", default=None, type=int, help="Override stale threshold (days)")
 @click.option("--output", default=None, type=click.Path(), help="Write to file instead of stdout")
-def main(projects, output_format, include_watched, stale_days, output):
+@click.option("--user", default=None, help="Jira user email to report on (default: yourself)")
+def main(projects, output_format, include_watched, stale_days, output, user):
     """Generate a daily standup report from Jira."""
     try:
         config = get_config()
@@ -46,7 +47,7 @@ def main(projects, output_format, include_watched, stale_days, output):
     console = Console()
 
     with console.status("[bold cyan]Fetching Jira data..."):
-        report = standup_report(client, config)
+        report = standup_report(client, config, user=user)
 
     if output_format == "json":
         data = {

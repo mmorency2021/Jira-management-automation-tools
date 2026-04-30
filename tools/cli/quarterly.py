@@ -59,7 +59,8 @@ def _current_quarter() -> tuple[str, int]:
 @click.option("--detailed", is_flag=True, help="Generate detailed narrative report")
 @click.option("--llm", "llm_provider", default=None, type=click.Choice(["ollama", "openai", "anthropic"]), help="LLM provider for narrative analysis")
 @click.option("--model", "llm_model", default=None, help="LLM model name (e.g. llama3, gpt-4o-mini, claude-sonnet-4-6)")
-def main(quarter, year, output_format, output, export_sheets, export_slides, export_xlsx, export_docx, export_pptx, detailed, llm_provider, llm_model):
+@click.option("--user", default=None, help="Jira user email to report on (default: yourself)")
+def main(quarter, year, output_format, output, export_sheets, export_slides, export_xlsx, export_docx, export_pptx, detailed, llm_provider, llm_model, user):
     """Generate a quarterly review report."""
     try:
         config = get_config()
@@ -80,7 +81,7 @@ def main(quarter, year, output_format, output, export_sheets, export_slides, exp
     console.print()
 
     with console.status("Fetching quarterly data..."):
-        report = quarterly_report(client, config, start_date, end_date)
+        report = quarterly_report(client, config, start_date, end_date, user=user)
 
     if detailed:
         text = format_quarterly_detailed(report, quarter, year)

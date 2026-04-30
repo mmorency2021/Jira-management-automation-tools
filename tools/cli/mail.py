@@ -22,14 +22,15 @@ def _require_recipient(to: str, config) -> str:
 
 @click.command()
 @click.option("--to", default="", help="Override recipient email address")
+@click.option("--user", default=None, help="Jira user email to report on (default: yourself)")
 @click.option("--dry-run", is_flag=True, help="Print email instead of sending")
-def mail_standup(to, dry_run):
+def mail_standup(to, user, dry_run):
     """Send daily standup report by email."""
     config = get_config()
     recipient = _require_recipient(to, config)
     client = JiraClient(config)
 
-    report = standup_report(client, config)
+    report = standup_report(client, config, user=user)
     body = format_markdown_standup(
         report["my_issues"],
         report["stale"],
@@ -63,12 +64,13 @@ def mail_standup(to, dry_run):
 
 @click.command()
 @click.option("--to", default="", help="Override recipient email address")
+@click.option("--user", default=None, help="Jira user email to report on (default: yourself)")
 @click.option("--quarter", type=click.Choice(["Q1", "Q2", "Q3", "Q4"]), default=None)
 @click.option("--year", type=int, default=None)
 @click.option("--llm", "llm_provider", type=click.Choice(["ollama", "openai", "anthropic"]), default=None)
 @click.option("--model", "llm_model", default="")
 @click.option("--dry-run", is_flag=True, help="Print email instead of sending")
-def mail_quarterly(to, quarter, year, llm_provider, llm_model, dry_run):
+def mail_quarterly(to, user, quarter, year, llm_provider, llm_model, dry_run):
     """Send quarterly report by email."""
     config = get_config()
     recipient = _require_recipient(to, config)
@@ -98,7 +100,7 @@ def mail_quarterly(to, quarter, year, llm_provider, llm_model, dry_run):
     start_date = f"{year}-{start_md}"
     end_date = f"{year}-{end_md}"
 
-    report = quarterly_report(client, config, start_date, end_date)
+    report = quarterly_report(client, config, start_date, end_date, user=user)
     body = format_quarterly_detailed(report, quarter, year)
 
     provider = llm_provider or config.llm_provider

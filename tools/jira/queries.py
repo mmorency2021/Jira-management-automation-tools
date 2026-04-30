@@ -16,8 +16,14 @@ def discover_projects(client: JiraClient) -> list[str]:
     return sorted(projects)
 
 
-def my_open_issues(client: JiraClient, projects: list[str] = None) -> list[Issue]:
-    jql = "assignee = currentUser() AND status NOT IN (Closed, Done)"
+def _assignee_clause(user: str = None) -> str:
+    if user:
+        return f'assignee = "{user}"'
+    return "assignee = currentUser()"
+
+
+def my_open_issues(client: JiraClient, projects: list[str] = None, user: str = None) -> list[Issue]:
+    jql = f"{_assignee_clause(user)} AND status NOT IN (Closed, Done)"
     if projects:
         project_list = ", ".join(projects)
         jql += f" AND project IN ({project_list})"
@@ -37,9 +43,9 @@ def watched_issues(client: JiraClient, projects: list[str] = None) -> list[Issue
 
 
 def recently_updated(
-    client: JiraClient, projects: list[str] = None, days: int = 1
+    client: JiraClient, projects: list[str] = None, days: int = 1, user: str = None,
 ) -> list[Issue]:
-    jql = f"assignee = currentUser() AND updated >= -{days}d"
+    jql = f"{_assignee_clause(user)} AND updated >= -{days}d"
     if projects:
         project_list = ", ".join(projects)
         jql += f" AND project IN ({project_list})"
@@ -49,9 +55,9 @@ def recently_updated(
 
 
 def stale_issues(
-    client: JiraClient, projects: list[str] = None, days: int = 14
+    client: JiraClient, projects: list[str] = None, days: int = 14, user: str = None,
 ) -> list[Issue]:
-    jql = f"assignee = currentUser() AND updated <= -{days}d AND status NOT IN (Closed, Done)"
+    jql = f"{_assignee_clause(user)} AND updated <= -{days}d AND status NOT IN (Closed, Done)"
     if projects:
         project_list = ", ".join(projects)
         jql += f" AND project IN ({project_list})"
@@ -61,9 +67,9 @@ def stale_issues(
 
 
 def recently_closed(
-    client: JiraClient, projects: list[str] = None, days: int = 7
+    client: JiraClient, projects: list[str] = None, days: int = 7, user: str = None,
 ) -> list[Issue]:
-    jql = f"assignee = currentUser() AND status IN (Closed, Done) AND updated >= -{days}d"
+    jql = f"{_assignee_clause(user)} AND status IN (Closed, Done) AND updated >= -{days}d"
     if projects:
         project_list = ", ".join(projects)
         jql += f" AND project IN ({project_list})"
@@ -79,8 +85,8 @@ def issues_by_status(client: JiraClient, project: str, status: str) -> list[Issu
     return [Issue.from_raw(r) for r in raw]
 
 
-def blocked_issues(client: JiraClient, projects: list[str] = None) -> list[Issue]:
-    jql = 'assignee = currentUser() AND status NOT IN (Closed, Done) AND issueFunction in linkedIssuesOf("status != Closed AND status != Done", "is blocked by")'
+def blocked_issues(client: JiraClient, projects: list[str] = None, user: str = None) -> list[Issue]:
+    jql = f'{_assignee_clause(user)} AND status NOT IN (Closed, Done) AND issueFunction in linkedIssuesOf("status != Closed AND status != Done", "is blocked by")'
     if projects:
         project_list = ", ".join(projects)
         jql += f" AND project IN ({project_list})"
@@ -89,12 +95,12 @@ def blocked_issues(client: JiraClient, projects: list[str] = None) -> list[Issue
         raw = client.search_issues(jql)
         return [Issue.from_raw(r) for r in raw]
     except Exception:
-        return _blocked_issues_fallback(client, projects)
+        return _blocked_issues_fallback(client, projects, user=user)
 
 
-def _blocked_issues_fallback(client: JiraClient, projects: list[str] = None) -> list[Issue]:
+def _blocked_issues_fallback(client: JiraClient, projects: list[str] = None, user: str = None) -> list[Issue]:
     """Fallback for instances without JQL functions — check issue links directly."""
-    all_issues = my_open_issues(client, projects)
+    all_issues = my_open_issues(client, projects, user=user)
     blocked = []
     for issue in all_issues:
         for link in issue.links:
@@ -115,8 +121,9 @@ def quarterly_closed(
     projects: list[str],
     start_date: str,
     end_date: str,
+    user: str = None,
 ) -> list[Issue]:
-    jql = "assignee = currentUser()"
+    jql = _assignee_clause(user)
     if projects:
         project_list = ", ".join(projects)
         jql += f" AND project IN ({project_list})"

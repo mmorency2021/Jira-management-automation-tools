@@ -13,9 +13,9 @@ def _resolve_projects(client: JiraClient, config: Config) -> list[str]:
     return queries.discover_projects(client)
 
 
-def standup_report(client: JiraClient, config: Config) -> dict:
+def standup_report(client: JiraClient, config: Config, user: str = None) -> dict:
     projects = _resolve_projects(client, config)
-    my_issues = queries.my_open_issues(client, projects)
+    my_issues = queries.my_open_issues(client, projects, user=user)
 
     stale = [
         i for i in my_issues
@@ -23,12 +23,12 @@ def standup_report(client: JiraClient, config: Config) -> dict:
         and i.days_since_update >= config.stale_threshold_for_status(i.status)
     ]
 
-    blocked = queries.blocked_issues(client, projects)
+    blocked = queries.blocked_issues(client, projects, user=user)
 
-    closed = queries.recently_closed(client, projects, days=7)
+    closed = queries.recently_closed(client, projects, days=7, user=user)
 
     watched = []
-    if config.watched_projects:
+    if config.watched_projects and not user:
         watched = queries.watched_issues(client, config.watched_projects)
 
     by_status = {}
@@ -89,9 +89,10 @@ def quarterly_report(
     config: Config,
     start_date: str,
     end_date: str,
+    user: str = None,
 ) -> dict:
     projects = _resolve_projects(client, config)
-    closed = queries.quarterly_closed(client, projects, start_date, end_date)
+    closed = queries.quarterly_closed(client, projects, start_date, end_date, user=user)
 
     by_project: dict[str, list[Issue]] = {}
     by_type: dict[str, list[Issue]] = {}
