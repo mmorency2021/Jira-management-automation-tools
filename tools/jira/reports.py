@@ -14,7 +14,7 @@ def _resolve_projects(client: JiraClient, config: Config) -> list[str]:
 
 
 def standup_report(client: JiraClient, config: Config, user: str = None) -> dict:
-    projects = _resolve_projects(client, config)
+    projects = _resolve_projects(client, config) if not user else None
     my_issues = queries.my_open_issues(client, projects, user=user)
 
     stale = [
@@ -91,7 +91,7 @@ def quarterly_report(
     end_date: str,
     user: str = None,
 ) -> dict:
-    projects = _resolve_projects(client, config)
+    projects = _resolve_projects(client, config) if not user else None
     closed = queries.quarterly_closed(client, projects, start_date, end_date, user=user)
 
     by_project: dict[str, list[Issue]] = {}
