@@ -47,6 +47,7 @@
                     <option value="ollama" {% if form_llm_provider|default('') == 'ollama' %}selected{% endif %}>Ollama (local)</option>
                     <option value="openai" {% if form_llm_provider|default('') == 'openai' %}selected{% endif %}>OpenAI</option>
                     <option value="anthropic" {% if form_llm_provider|default('') == 'anthropic' %}selected{% endif %}>Anthropic</option>
+                    <option value="vertex" {% if form_llm_provider|default('') == 'vertex' %}selected{% endif %}>Vertex AI (Google Cloud)</option>
                 </select>
             </div>
 
