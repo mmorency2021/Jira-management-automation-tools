@@ -67,7 +67,7 @@ def mail_standup(to, user, dry_run):
 @click.option("--user", default=None, help="Jira user email to report on (default: yourself)")
 @click.option("--quarter", type=click.Choice(["Q1", "Q2", "Q3", "Q4"]), default=None)
 @click.option("--year", type=int, default=None)
-@click.option("--llm", "llm_provider", type=click.Choice(["ollama", "openai", "anthropic"]), default=None)
+@click.option("--llm", "llm_provider", type=click.Choice(["ollama", "openai", "anthropic", "vertex"]), default=None)
 @click.option("--model", "llm_model", default="")
 @click.option("--dry-run", is_flag=True, help="Print email instead of sending")
 def mail_quarterly(to, user, quarter, year, llm_provider, llm_model, dry_run):

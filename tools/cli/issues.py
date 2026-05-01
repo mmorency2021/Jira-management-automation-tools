@@ -104,7 +104,7 @@ def comment(key, body):
 @click.option("--parent", default=None, help="Parent issue key (for subtasks)")
 @click.option("--priority", default=None, help="Priority (e.g., High, Normal, Low)")
 @click.option("--generate", is_flag=True, help="Use LLM to generate description from summary")
-@click.option("--llm", "llm_provider", default=None, type=click.Choice(["ollama", "openai", "anthropic"]), help="LLM provider (overrides .env)")
+@click.option("--llm", "llm_provider", default=None, type=click.Choice(["ollama", "openai", "anthropic", "vertex"]), help="LLM provider (overrides .env)")
 @click.option("--model", "llm_model", default=None, help="LLM model name")
 def create(project, summary, issue_type, description, assign, label, parent, priority, generate, llm_provider, llm_model):
     """Create a new issue."""

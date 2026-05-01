@@ -152,6 +152,30 @@ LLM_MODEL=claude-sonnet-4-6
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+#### Vertex AI (Google Cloud)
+
+If you have access to Claude via Google Cloud Vertex AI:
+
+```bash
+pip install 'anthropic[vertex]'
+
+# Authenticate with Google Cloud
+gcloud auth application-default login
+
+# Set environment variables (in .bashrc/.zshrc or .env):
+ANTHROPIC_VERTEX_PROJECT_ID=your-gcp-project-id
+CLOUD_ML_REGION=us-east5    # or your Vertex region
+```
+
+Then run with `--llm vertex`:
+
+```bash
+jiraops quarterly --detailed --llm vertex
+jiraops issues create --project NGC --type Story --summary "Upgrade firmware" --generate --llm vertex
+```
+
+No `ANTHROPIC_API_KEY` needed — authentication goes through your GCP credentials.
+
 You can also pass the provider per-command without changing `.env`:
 
 ```bash

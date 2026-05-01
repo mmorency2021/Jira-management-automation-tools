@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from typing import Any
 
@@ -125,6 +126,8 @@ def generate_narrative(
             return _call_openai(prompt_data, model, openai_api_key)
         elif provider == "anthropic":
             return _call_anthropic(prompt_data, model, anthropic_api_key)
+        elif provider == "vertex":
+            return _call_vertex(prompt_data, model)
         else:
             print(f"Unknown LLM provider: {provider}", file=sys.stderr)
             return None
@@ -194,6 +197,30 @@ def _call_anthropic(prompt_data: str, model: str, api_key: str) -> str | None:
     return resp.content[0].text
 
 
+def _call_vertex(prompt_data: str, model: str) -> str | None:
+    project_id = os.environ.get("ANTHROPIC_VERTEX_PROJECT_ID", "")
+    region = os.environ.get("CLOUD_ML_REGION", os.environ.get("VERTEX_REGION", "us-east5"))
+
+    if not project_id:
+        print("ANTHROPIC_VERTEX_PROJECT_ID not set", file=sys.stderr)
+        return None
+
+    try:
+        from anthropic import AnthropicVertex
+    except ImportError:
+        print("anthropic package not installed. Run: pip install 'anthropic[vertex]'", file=sys.stderr)
+        return None
+
+    client = AnthropicVertex(project_id=project_id, region=region)
+    resp = client.messages.create(
+        model=model or "claude-sonnet-4-6",
+        max_tokens=8192,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": prompt_data}],
+    )
+    return resp.content[0].text
+
+
 def generate_story(
     summary: str,
     issue_type: str,
@@ -221,6 +248,8 @@ def generate_story(
             return _call_llm_with_prompt(STORY_SYSTEM_PROMPT, prompt, "openai", model, "", openai_api_key, "")
         elif provider == "anthropic":
             return _call_llm_with_prompt(STORY_SYSTEM_PROMPT, prompt, "anthropic", model, "", "", anthropic_api_key)
+        elif provider == "vertex":
+            return _call_llm_with_prompt(STORY_SYSTEM_PROMPT, prompt, "vertex", model, "", "", "")
         else:
             print(f"Unknown LLM provider: {provider}", file=sys.stderr)
             return None
@@ -275,6 +304,26 @@ def _call_llm_with_prompt(
             print("anthropic package not installed. Run: pip install anthropic", file=sys.stderr)
             return None
         client = Anthropic(api_key=anthropic_api_key)
+        resp = client.messages.create(
+            model=model or "claude-sonnet-4-6",
+            max_tokens=4096,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        return resp.content[0].text
+
+    elif provider == "vertex":
+        project_id = os.environ.get("ANTHROPIC_VERTEX_PROJECT_ID", "")
+        region = os.environ.get("CLOUD_ML_REGION", os.environ.get("VERTEX_REGION", "us-east5"))
+        if not project_id:
+            print("ANTHROPIC_VERTEX_PROJECT_ID not set", file=sys.stderr)
+            return None
+        try:
+            from anthropic import AnthropicVertex
+        except ImportError:
+            print("anthropic package not installed. Run: pip install 'anthropic[vertex]'", file=sys.stderr)
+            return None
+        client = AnthropicVertex(project_id=project_id, region=region)
         resp = client.messages.create(
             model=model or "claude-sonnet-4-6",
             max_tokens=4096,

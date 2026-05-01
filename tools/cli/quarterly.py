@@ -57,7 +57,7 @@ def _current_quarter() -> tuple[str, int]:
 @click.option("--export-docx", is_flag=True, help="Export to local .docx file")
 @click.option("--export-pptx", is_flag=True, help="Export to local .pptx file")
 @click.option("--detailed", is_flag=True, help="Generate detailed narrative report")
-@click.option("--llm", "llm_provider", default=None, type=click.Choice(["ollama", "openai", "anthropic"]), help="LLM provider for narrative analysis")
+@click.option("--llm", "llm_provider", default=None, type=click.Choice(["ollama", "openai", "anthropic", "vertex"]), help="LLM provider for narrative analysis")
 @click.option("--model", "llm_model", default=None, help="LLM model name (e.g. llama3, gpt-4o-mini, claude-sonnet-4-6)")
 @click.option("--user", default=None, help="Jira user email to report on (default: yourself)")
 def main(quarter, year, output_format, output, export_sheets, export_slides, export_xlsx, export_docx, export_pptx, detailed, llm_provider, llm_model, user):
