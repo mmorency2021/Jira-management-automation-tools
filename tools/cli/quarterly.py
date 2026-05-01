@@ -117,7 +117,6 @@ def main(quarter, year, output_format, output, export_sheets, export_slides, exp
             "quarter": f"{quarter} {year}",
             "date_range": report["date_range"],
             "total_closed": report["total_closed"],
-            "avg_cycle_time_days": report["avg_cycle_time_days"],
             "by_project": report["by_project"],
             "by_type": report["by_type"],
             "by_label": report["by_label"],
@@ -140,7 +139,6 @@ def main(quarter, year, output_format, output, export_sheets, export_slides, exp
             "",
             "## Summary",
             f"- **Total closed:** {report['total_closed']}",
-            f"- **Average cycle time:** {report['avg_cycle_time_days']} days",
             "",
             "## By Project",
         ]
@@ -175,7 +173,6 @@ def main(quarter, year, output_format, output, export_sheets, export_slides, exp
     # Table format (default — skip if --detailed already printed)
     if not detailed:
         console.print(f"[bold]Total closed:[/bold] {report['total_closed']}")
-        console.print(f"[bold]Avg cycle time:[/bold] {report['avg_cycle_time_days']} days")
         console.print()
 
         if report["by_project"]:

@@ -76,15 +76,15 @@ technical depth, or initiative. Look for issues with extensive comment threads \
 coordination effort), or labels like 'security', 'production', 'customer-reported' \
 (indicating high-stakes work). Explain why each stands out.
 
-5. **Productivity & Quality Summary** — 2-3 sentences assessing delivery velocity, \
-cycle time trends, and quality indicators (bugs fixed, stability improvements). \
+5. **Productivity & Quality Summary** — 2-3 sentences assessing delivery velocity \
+and quality indicators (bugs fixed, stability improvements). \
 End on a strong note about capabilities demonstrated.
 
 Guidelines:
 - Frame everything as accomplishments, not just tasks completed.
 - Use action-oriented language: "delivered", "resolved", "unblocked", "improved", \
 "eliminated", "enabled", "accelerated".
-- Quantify where possible: cycle times, issue counts, turnaround speed.
+- Quantify where possible: issue counts, scope of impact, teams involved.
 - Use markdown formatting (headers, bold, bullets).
 - Keep issue keys visible — they are important for traceability.
 - Be specific and concrete, not generic. Reference actual issue summaries and details.

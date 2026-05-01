@@ -101,16 +101,6 @@ def quarterly_report(
         for label in issue.labels:
             by_label[label] = by_label.get(label, 0) + 1
 
-    total_cycle_days = 0
-    cycle_count = 0
-    for issue in closed:
-        if issue.created and issue.updated:
-            delta = issue.updated - issue.created
-            total_cycle_days += delta.days
-            cycle_count += 1
-
-    avg_cycle_time = total_cycle_days / cycle_count if cycle_count else 0
-
     by_epic: dict[str, dict] = {}
     standalone: list[Issue] = []
     for issue in closed:
@@ -134,19 +124,9 @@ def quarterly_report(
         for comp in issue.components:
             by_component[comp] = by_component.get(comp, 0) + 1
 
-    cycle_times = []
-    for issue in closed:
-        if issue.created and issue.updated:
-            cycle_times.append((issue.updated - issue.created).days)
-    fastest = min(cycle_times) if cycle_times else 0
-    slowest = max(cycle_times) if cycle_times else 0
-
     return {
         "date_range": {"start": start_date, "end": end_date},
         "total_closed": len(closed),
-        "avg_cycle_time_days": round(avg_cycle_time, 1),
-        "fastest_cycle_days": fastest,
-        "slowest_cycle_days": slowest,
         "by_project": {k: len(v) for k, v in by_project.items()},
         "by_type": {k: len(v) for k, v in by_type.items()},
         "by_label": dict(sorted(by_label.items(), key=lambda x: x[1], reverse=True)[:15]),

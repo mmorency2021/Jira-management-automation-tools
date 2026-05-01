@@ -228,11 +228,7 @@ def _accomplishment_bullet(issue: Issue) -> str:
         if len(clean) > 200:
             clean = clean[:200] + "..."
         desc = f": {clean}"
-    cycle = ""
-    if issue.created and issue.updated:
-        days = (issue.updated - issue.created).days
-        cycle = f" *(resolved in {days} day{'s' if days != 1 else ''})*"
-    return f"- **{issue.key}** [{issue.issue_type}] {issue.summary}{desc}{cycle}"
+    return f"- **{issue.key}** [{issue.issue_type}] {issue.summary}{desc}"
 
 
 def format_quarterly_detailed(report: dict, quarter: str, year: int) -> str:
@@ -240,9 +236,6 @@ def format_quarterly_detailed(report: dict, quarter: str, year: int) -> str:
     start = report["date_range"]["start"]
     end = report["date_range"]["end"]
     total = report["total_closed"]
-    avg_cycle = report["avg_cycle_time_days"]
-    fastest = report.get("fastest_cycle_days", 0)
-    slowest = report.get("slowest_cycle_days", 0)
     by_project = report["by_project"]
     by_type = report["by_type"]
     by_priority = report.get("by_priority", {})
@@ -254,10 +247,6 @@ def format_quarterly_detailed(report: dict, quarter: str, year: int) -> str:
 
     high_impact = [i for i in issues if i.priority in ("Blocker", "Critical", "Urgent", "Highest")]
     bugs_fixed = by_type.get("Bug", 0)
-    fast_turnaround = [
-        i for i in issues
-        if i.created and i.updated and (i.updated - i.created).days <= 2
-    ]
     cross_project_links = set()
     for issue in issues:
         for link in issue.links:
@@ -280,7 +269,7 @@ def format_quarterly_detailed(report: dict, quarter: str, year: int) -> str:
     summary_parts = [
         f"During {quarter} {year}, **{total} issues** were successfully resolved across "
         f"**{len(by_project)} project{'s' if len(by_project) != 1 else ''}** "
-        f"({project_names}), with an average cycle time of **{avg_cycle} days**."
+        f"({project_names})."
     ]
 
     if by_type:
@@ -307,13 +296,6 @@ def format_quarterly_detailed(report: dict, quarter: str, year: int) -> str:
             f"improving system stability and reliability."
         )
 
-    if fast_turnaround:
-        summary_parts.append(
-            f"**{len(fast_turnaround)} issue{'s' if len(fast_turnaround) != 1 else ''}** "
-            f"{'were' if len(fast_turnaround) != 1 else 'was'} resolved within 2 days, "
-            f"demonstrating strong responsiveness to urgent needs."
-        )
-
     if cross_project_links:
         summary_parts.append(
             f"Cross-project coordination was maintained with "
@@ -330,15 +312,10 @@ def format_quarterly_detailed(report: dict, quarter: str, year: int) -> str:
     lines.append("|--------|-------|")
     lines.append(f"| Issues resolved | {total} |")
     lines.append(f"| Projects touched | {len(by_project)} |")
-    lines.append(f"| Avg cycle time | {avg_cycle} days |")
-    lines.append(f"| Fastest resolution | {fastest} day{'s' if fastest != 1 else ''} |")
-    lines.append(f"| Slowest resolution | {slowest} days |")
     if by_epic:
         lines.append(f"| Epics/initiatives | {len(by_epic)} |")
     if high_impact:
         lines.append(f"| High-priority resolved | {len(high_impact)} |")
-    if fast_turnaround:
-        lines.append(f"| Resolved within 2 days | {len(fast_turnaround)} |")
     lines.append("")
 
     # --- Accomplishments by Epic ---
@@ -436,10 +413,6 @@ _MAX_LINKS = 5
 
 
 def _issue_prompt_block(issue, indent: str = "  ", compact: bool = False) -> str:
-    cycle = ""
-    if issue.created and issue.updated:
-        cycle = f" (cycle: {(issue.updated - issue.created).days} days)"
-
     if compact:
         desc = ""
         if issue.description:
@@ -447,12 +420,12 @@ def _issue_prompt_block(issue, indent: str = "  ", compact: bool = False) -> str
             desc = f" | {clean}"
         return (
             f"{indent}- {issue.key} [{issue.issue_type}] [{issue.priority}] "
-            f"{issue.summary}{cycle}{desc}"
+            f"{issue.summary}{desc}"
         )
 
     parts = [
         f"{indent}- {issue.key} [{issue.issue_type}] [{issue.priority}] "
-        f"{issue.summary}{cycle}"
+        f"{issue.summary}"
     ]
 
     if issue.description:
@@ -487,9 +460,6 @@ def report_to_prompt_data(report: dict) -> str:
     dr = report["date_range"]
     lines.append(f"QUARTERLY REPORT DATA — {dr['start']} to {dr['end']}")
     lines.append(f"Total issues resolved: {report['total_closed']}")
-    lines.append(f"Average cycle time: {report['avg_cycle_time_days']} days")
-    lines.append(f"Fastest resolution: {report.get('fastest_cycle_days', 0)} days")
-    lines.append(f"Slowest resolution: {report.get('slowest_cycle_days', 0)} days")
     lines.append("")
 
     if report.get("by_project"):
